@@ -98,7 +98,7 @@ export class PromptModal extends Modal {
      * This handles cases where user types "插件 A" and we want to search for "A"
      */
     removeInputPrefix(inputValue: string): string {
-        const separator = " "; // The prefix separator is always a space for user input
+        const separator = this.settings.realPrefixSeparator || " ";
         
         // Check if the input starts with any configured prefix (not filenamePrefix)
         for (const prefixedFolder of this.settings.prefixedFolders) {
@@ -115,7 +115,8 @@ export class PromptModal extends Modal {
     }
 
     updateExistingNotesHint(inputValue: string) {
-        if (!inputValue) {
+        // Check if the feature is enabled
+        if (!this.settings.showExistingNotesHint || !inputValue) {
             this.existingNotesHintEl.style.display = 'none';
             this.matchingFilesEl.style.display = 'none';
             return;
@@ -142,10 +143,14 @@ export class PromptModal extends Modal {
 
         if (matchingFiles.length > 0) {
             this.existingNotesHintEl.style.display = 'block';
-            this.existingNotesHintEl.innerHTML = `<span class="existing-notes-count">${matchingFiles.length}</span> existing note(s) found matching "${inputValue}"`;
             
-            // Show matching files list (limit to first 5)
-            const filesToShow = matchingFiles.slice(0, 5);
+            // Show the actual search term used (cleaned input if prefix was removed)
+            const searchTerm = cleanInputValue !== inputValue ? cleanInputValue : inputValue;
+            this.existingNotesHintEl.innerHTML = `<span class="existing-notes-count">${matchingFiles.length}</span> existing note(s) found matching "${searchTerm}"`;
+            
+            // Show matching files list (limit based on settings)
+            const limit = this.settings.existingNotesLimit || 3;
+            const filesToShow = matchingFiles.slice(0, limit);
             this.matchingFilesEl.innerHTML = '';
             this.matchingFilesEl.style.display = 'block';
             
@@ -171,10 +176,10 @@ export class PromptModal extends Modal {
                 this.matchingFilesEl.appendChild(fileEl);
             });
             
-            if (matchingFiles.length > 5) {
+            if (matchingFiles.length > limit) {
                 const moreEl = document.createElement('div');
                 moreEl.className = 'matching-file-more';
-                moreEl.textContent = `... and ${matchingFiles.length - 5} more`;
+                moreEl.textContent = `... and ${matchingFiles.length - limit} more`;
                 this.matchingFilesEl.appendChild(moreEl);
             }
         } else {

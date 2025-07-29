@@ -44,6 +44,8 @@ export interface RapidNotesSettings {
     capitalizeFilename: boolean;
     escapeSymbol: string;
     realPrefixSeparator: string;
+    showExistingNotesHint: boolean;
+    existingNotesLimit: number;
 }
 
 const DEFAULT_SETTINGS = {
@@ -52,7 +54,9 @@ const DEFAULT_SETTINGS = {
     showModalSuggestions: true,
     capitalizeFilename: true,
     escapeSymbol: "/",
-    realPrefixSeparator: " "
+    realPrefixSeparator: " ",
+    showExistingNotesHint: true,
+    existingNotesLimit: 3
 };
 
 const PLACEHOLDER_RESOLVERS = [
@@ -486,6 +490,32 @@ class RapidNotesSettingsTab extends PluginSettingTab {
             .setValue(this.plugin.settings.realPrefixSeparator)
             .onChange((realPrefixSeparator) => {
                 this.plugin.settings.realPrefixSeparator = realPrefixSeparator;
+                this.plugin.saveSettings();
+            });
+        });
+
+        new Setting(this.containerEl)
+        .setName("Show existing notes hint")
+        .setDesc("Display existing notes that match your input to avoid creating duplicates.")
+        .addToggle((toggle) => {
+            toggle
+            .setValue(this.plugin.settings.showExistingNotesHint)
+            .onChange((showExistingNotesHint) => {
+                this.plugin.settings.showExistingNotesHint = showExistingNotesHint;
+                this.plugin.saveSettings();
+            });
+        });
+
+        new Setting(this.containerEl)
+        .setName("Existing notes display limit")
+        .setDesc("Maximum number of existing notes to display in the hint list.")
+        .addSlider((slider) => {
+            slider
+            .setLimits(1, 10, 1)
+            .setValue(this.plugin.settings.existingNotesLimit)
+            .setDynamicTooltip()
+            .onChange((existingNotesLimit) => {
+                this.plugin.settings.existingNotesLimit = existingNotesLimit;
                 this.plugin.saveSettings();
             });
         });
