@@ -15,6 +15,67 @@
     display: block;
 }
 
+/* Existing Notes Hint */
+.rapid-notes-modal .existing-notes-hint {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: var(--background-secondary);
+    border-radius: 6px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    border-left: 3px solid var(--interactive-accent);
+}
+
+.rapid-notes-modal .existing-notes-count {
+    font-weight: bold;
+    color: var(--interactive-accent);
+}
+
+.rapid-notes-modal .matching-files-list {
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background-color: var(--background-primary);
+}
+
+.rapid-notes-modal .matching-file-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-border);
+    transition: background-color 0.1s ease;
+}
+
+.rapid-notes-modal .matching-file-item:last-child {
+    border-bottom: none;
+}
+
+.rapid-notes-modal .matching-file-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.rapid-notes-modal .matching-file-item .file-name {
+    display: block;
+    font-weight: 500;
+    color: var(--text-normal);
+    margin-bottom: 2px;
+}
+
+.rapid-notes-modal .matching-file-item .file-path {
+    display: block;
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+.rapid-notes-modal .matching-file-more {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+}
+
 /* Settings */
 .rapid-notes_search {
     width: 100%;
