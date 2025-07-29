@@ -46,6 +46,7 @@ export interface RapidNotesSettings {
     realPrefixSeparator: string;
     showExistingNotesHint: boolean;
     existingNotesLimit: number;
+    useFuzzyMatching: boolean;
 }
 
 const DEFAULT_SETTINGS = {
@@ -56,7 +57,8 @@ const DEFAULT_SETTINGS = {
     escapeSymbol: "/",
     realPrefixSeparator: " ",
     showExistingNotesHint: true,
-    existingNotesLimit: 3
+    existingNotesLimit: 3,
+    useFuzzyMatching: true
 };
 
 const PLACEHOLDER_RESOLVERS = [
@@ -503,22 +505,39 @@ class RapidNotesSettingsTab extends PluginSettingTab {
             .onChange((showExistingNotesHint) => {
                 this.plugin.settings.showExistingNotesHint = showExistingNotesHint;
                 this.plugin.saveSettings();
+                // Re-render settings to show/hide dependent options
+                this.display();
             });
         });
 
-        new Setting(this.containerEl)
-        .setName("Existing notes display limit")
-        .setDesc("Maximum number of existing notes to display in the hint list.")
-        .addSlider((slider) => {
-            slider
-            .setLimits(1, 10, 1)
-            .setValue(this.plugin.settings.existingNotesLimit)
-            .setDynamicTooltip()
-            .onChange((existingNotesLimit) => {
-                this.plugin.settings.existingNotesLimit = existingNotesLimit;
-                this.plugin.saveSettings();
+        // Only show these settings if existing notes hint is enabled
+        if (this.plugin.settings.showExistingNotesHint) {
+            new Setting(this.containerEl)
+            .setName("Existing notes display limit")
+            .setDesc("Maximum number of existing notes to display in the hint list.")
+            .addSlider((slider) => {
+                slider
+                .setLimits(1, 10, 1)
+                .setValue(this.plugin.settings.existingNotesLimit)
+                .setDynamicTooltip()
+                .onChange((existingNotesLimit) => {
+                    this.plugin.settings.existingNotesLimit = existingNotesLimit;
+                    this.plugin.saveSettings();
+                });
             });
-        });
+
+            new Setting(this.containerEl)
+            .setName("Use fuzzy matching")
+            .setDesc("Enable intelligent fuzzy matching (e.g., 'OB plugin' matches 'Obsidian plugin'). Disable for simple substring matching.")
+            .addToggle((toggle) => {
+                toggle
+                .setValue(this.plugin.settings.useFuzzyMatching)
+                .onChange((useFuzzyMatching) => {
+                    this.plugin.settings.useFuzzyMatching = useFuzzyMatching;
+                    this.plugin.saveSettings();
+                });
+            });
+        }
 
         new Setting(this.containerEl)
         .setName("Capitalize note name and new folders.")
