@@ -255,12 +255,12 @@ export class PromptModal extends Modal {
                 
                 // Show quality indicators only in fuzzy matching mode
                 let qualityIcon = '';
-                if (this.settings.useFuzzyMatching) {
-                    const matchQuality = score >= 100 ? '💯' : 
-                                       score >= 80 ? '🎯' : 
-                                       score >= 60 ? '✨' : '📝';
-                    qualityIcon = `${matchQuality} `;
-                }
+                // if (this.settings.useFuzzyMatching) {
+                //     const matchQuality = score >= 100 ? '💯' : 
+                //                        score >= 80 ? '🎯' : 
+                //                        score >= 60 ? '✨' : '📝';
+                //     qualityIcon = `${matchQuality} `;
+                // }
                 
                 // Show filename with match quality indicator (if enabled)
                 const displayName = file.basename;
