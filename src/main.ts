@@ -23,6 +23,7 @@ export enum NotePlacement {
     newWindow = "window"
 }
 export interface PrefixFolderTuple {
+    ruleName: string;
     prefix: string;
     filenamePrefix: string;
     folder: string;
@@ -258,7 +259,11 @@ export default class RapidNotes extends Plugin {
             showSuggestions = false;
         }
         if(showSuggestions) {
-            modalSuggestions = this.settings.prefixedFolders.map((item)=>{ return {"command": item.prefix, "purpose": this.resolvePlaceholderValues(item.folder) } });
+            modalSuggestions = this.settings.prefixedFolders.map((item)=>{ 
+                // Use ruleName if available, otherwise use folder path
+                const displayName = item.ruleName?.trim() ? item.ruleName : this.resolvePlaceholderValues(item.folder);
+                return {"command": item.prefix, "purpose": displayName };
+            });
         }
         const escapeSymbol = this.settings.escapeSymbol || "/";
         const prompt = new PromptModal(this.app, placeholder, "rapid-notes-modal", escapeSymbol, modalSuggestions);
@@ -516,6 +521,9 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 el.createEl("b", {text: "Folder: "});
                 el.appendText("Location for the saved note. Can use placeholders such as {{date:YYYY-MM-DD}} (Moment.js formatting).");
                 el.createEl("br");
+                el.createEl("b", {text: "Rule Name (optional): "});
+                el.appendText("Display name for this rule in the input suggestions. If empty, folder path will be shown.");
+                el.createEl("br");
                 el.createEl("b", {text: "Toggle: "});
                 el.appendText("Create a command to save directly into the folder.");
                 el.createEl("br");
@@ -531,6 +539,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 .onClick(() => {
                     this.plugin.cleanEmptyEntries();
                     this.plugin.settings.prefixedFolders.unshift({
+                        ruleName: "",
                         folder: "",
                         prefix: "",
                         filenamePrefix: "",
@@ -585,9 +594,19 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                     });
                     cb.containerEl.addClass("rapid-notes_search");
                 })
+                .addText((cb) => {
+                    cb
+                    .setPlaceholder("Rule Name")
+                    .setValue(prefixedFolder.ruleName)
+                    .onChange((newRuleName) => {
+                        this.plugin.settings.prefixedFolders[index].ruleName = newRuleName.trim();
+                        this.plugin.saveSettings();
+                    });
+                })
                 .addToggle((toggle) => {
                     toggle
                     .setValue(this.plugin.settings.prefixedFolders[index].addCommand)
+                    .setTooltip("Register command for this rule")
                     .onChange((addCommand) => {
                         this.plugin.settings.prefixedFolders[index].addCommand = addCommand;
                         this.plugin.saveSettings();

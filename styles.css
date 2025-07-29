@@ -31,10 +31,13 @@
 
 @media screen and (min-width: 780px) {
     .rapid-notes-settings-entry input[type="text"]:first-child {
-        max-width: 60px;
+        max-width: 60px; /* Prefix */
     }
     .rapid-notes-settings-entry input[type="text"]:nth-child(2) {
-        max-width: 90px;
+        max-width: 90px; /* Real prefix */
+    }
+    .rapid-notes-settings-entry input[type="text"]:nth-child(4) {
+        max-width: 120px; /* Rule Name (after folder search) */
     }
 }
 
@@ -47,7 +50,13 @@
     .rapid-notes-settings-entry input[type="text"]:first-child,
     .rapid-notes-settings-entry input[type="text"]:nth-child(2) {
         flex-grow: 1;
-        flex-basis: 44%;
+        flex-basis: 44%; /* Prefix and Real prefix side by side */
+        width: 100%;
+    }
+    
+    .rapid-notes-settings-entry input[type="text"]:nth-child(4) {
+        flex-grow: 1;
+        flex-basis: 100%; /* Rule Name takes full width on mobile */
         width: 100%;
     }
 }
