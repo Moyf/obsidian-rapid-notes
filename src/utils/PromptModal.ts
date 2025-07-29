@@ -98,13 +98,13 @@ export class PromptModal extends Modal {
      * This handles cases where user types "插件 A" and we want to search for "A"
      */
     removeInputPrefix(inputValue: string): string {
-        const separator = this.settings.realPrefixSeparator || " ";
+        const separator = " "; // The prefix separator is always a space for user input
         
-        // Check if the input starts with any configured filename prefix
+        // Check if the input starts with any configured prefix (not filenamePrefix)
         for (const prefixedFolder of this.settings.prefixedFolders) {
-            const filenamePrefix = prefixedFolder.filenamePrefix?.trim();
-            if (filenamePrefix) {
-                const expectedPrefix = filenamePrefix + separator;
+            const prefix = prefixedFolder.prefix?.trim();
+            if (prefix) {
+                const expectedPrefix = prefix + separator;
                 if (inputValue.startsWith(expectedPrefix)) {
                     return inputValue.substring(expectedPrefix.length);
                 }

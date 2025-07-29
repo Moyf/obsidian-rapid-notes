@@ -18,12 +18,9 @@
 /* Existing Notes Hint */
 .rapid-notes-modal .existing-notes-hint {
     margin-top: 8px;
-    padding: 8px 12px;
-    background-color: var(--background-secondary);
-    border-radius: 6px;
+    padding: 6px 12px;
     font-size: 0.85em;
     color: var(--text-muted);
-    border-left: 3px solid var(--interactive-accent);
 }
 
 .rapid-notes-modal .existing-notes-count {
@@ -36,7 +33,6 @@
     max-height: 200px;
     overflow-y: auto;
     border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
     background-color: var(--background-primary);
 }
 
