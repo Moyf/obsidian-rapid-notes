@@ -285,7 +285,7 @@ export default class RapidNotes extends Plugin {
                     if (lastSlashIndex >= 0) {
                         filename = filename.slice(0, lastSlashIndex + 1) + filenamePrefix + this.settings.realPrefixSeparator + filename.slice(lastSlashIndex + 1);
                     } else {
-                        filename = filenamePrefix + " " + filename;
+                        filename = filenamePrefix + this.settings.realPrefixSeparator + filename;
                     }
                 }
             }
