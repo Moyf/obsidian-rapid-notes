@@ -16,15 +16,28 @@
 }
 
 /* Instruction highlighting based on input prefix matching */
-.rapid-notes-modal .prefix-matched {
-    border-radius: 0px;
+
+/* Default matched state (with animations and underline) */
+.prompt-instructions .prefix-matched {
     border-bottom: 2px var(--interactive-accent) solid;
     animation: rapid-notes-highlight-pulse 0.3s ease-out;
 }
 
-.rapid-notes-modal .prefix-unmatched {
+/* In hide-unmatched mode, matched elements have no special styling */
+.prompt-instructions.hide-unmatched .prefix-matched {
+    border-bottom: none;
+    animation: none;
+}
+
+/* Default unmatched state (dimmed) */
+.prompt-instructions .prefix-unmatched {
     opacity: 0.5;
     transition: opacity 0.2s ease;
+}
+
+/* In hide-unmatched mode, unmatched elements are hidden */
+.prompt-instructions.hide-unmatched .prefix-unmatched {
+    display: none !important;
 }
 
 @keyframes rapid-notes-highlight-pulse {

@@ -47,6 +47,7 @@ export interface RapidNotesSettings {
     showExistingNotesHint: boolean;
     existingNotesLimit: number;
     useFuzzyMatching: boolean;
+    hideUnmatchedRules: boolean;
 }
 
 const DEFAULT_SETTINGS = {
@@ -58,7 +59,8 @@ const DEFAULT_SETTINGS = {
     realPrefixSeparator: " ",
     showExistingNotesHint: true,
     existingNotesLimit: 3,
-    useFuzzyMatching: true
+    useFuzzyMatching: true,
+    hideUnmatchedRules: false
 };
 
 const PLACEHOLDER_RESOLVERS = [
@@ -470,8 +472,25 @@ class RapidNotesSettingsTab extends PluginSettingTab {
             .onChange((showModalSuggestions) => {
                 this.plugin.settings.showModalSuggestions = showModalSuggestions;
                 this.plugin.saveSettings();
+                // Re-render settings to show/hide dependent options
+                this.display();
             });
         });
+
+        // Only show this setting if modal suggestions are enabled
+        if (this.plugin.settings.showModalSuggestions) {
+            new Setting(this.containerEl)
+            .setName("Hide unmatched rules")
+            .setDesc("When typing in the input field, hide prefix rules that don't match instead of dimming them.")
+            .addToggle((toggle) => {
+                toggle
+                .setValue(this.plugin.settings.hideUnmatchedRules)
+                .onChange((hideUnmatchedRules) => {
+                    this.plugin.settings.hideUnmatchedRules = hideUnmatchedRules;
+                    this.plugin.saveSettings();
+                });
+            });
+        }
 
         new Setting(this.containerEl)
         .setName("Escape symbol to avoid checking the prefix and moving the note.")
