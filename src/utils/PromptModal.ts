@@ -17,6 +17,7 @@ export class PromptModal extends Modal {
     inputChangeListener: EventListener;
     existingNotesHintEl: HTMLDivElement;
     matchingFilesEl: HTMLDivElement;
+    instructionElements: HTMLDivElement[] = [];
 
     constructor(
         app: App,
@@ -79,6 +80,7 @@ export class PromptModal extends Modal {
             });
             for (const child of children) {
                 instructionsListEl.appendChild(child);
+                this.instructionElements.push(child);
             }
             this.modalEl.appendChild(instructionsHeadingEl);
             this.modalEl.appendChild(instructionsListEl);
@@ -99,6 +101,7 @@ export class PromptModal extends Modal {
         this.searchTimeout = setTimeout(() => {
             const inputValue = this.inputEl.value.trim();
             this.updateExistingNotesHint(inputValue);
+            this.updateInstructionHighlighting(inputValue);
         }, 200); // 200ms debounce
     }
 
@@ -290,6 +293,58 @@ export class PromptModal extends Modal {
             this.existingNotesHintEl.style.display = 'none';
             this.matchingFilesEl.style.display = 'none';
         }
+    }
+
+    /**
+     * Update CSS classes for prompt instructions based on input prefix matching
+     */
+    updateInstructionHighlighting(inputValue: string) {
+        if (!this.instructionElements.length) {
+            return;
+        }
+
+        // Find all matching prefixes based on input prefix logic
+        const matchingPrefixes: string[] = [];
+        const separator = this.settings.realPrefixSeparator || " ";
+        
+        // Extract the potential prefix from input (before separator or whole input if no separator)
+        let inputPrefix = inputValue;
+        const separatorIndex = inputValue.indexOf(separator);
+        if (separatorIndex >= 0) {
+            inputPrefix = inputValue.substring(0, separatorIndex);
+        }
+        
+        // Check which configured prefixes match the input prefix
+        for (const prefixedFolder of this.settings.prefixedFolders) {
+            const configuredPrefix = prefixedFolder.prefix?.trim();
+            if (configuredPrefix) {
+                // Check if the configured prefix starts with the input prefix
+                // This means: input "gd" matches both "gd" and "gd教程"
+                // But input "gd教程" only matches "gd教程", not "gd"
+                if (configuredPrefix.startsWith(inputPrefix)) {
+                    matchingPrefixes.push(configuredPrefix);
+                }
+            }
+        }
+
+        // Update CSS classes for each instruction element
+        this.instructionElements.forEach((element, index) => {
+            const instruction = this.instructions[index];
+            const isMatching = matchingPrefixes.includes(instruction.command);
+            
+            // Remove previous highlighting classes
+            element.removeClass('prefix-matched');
+            element.removeClass('prefix-unmatched');
+            
+            // Add appropriate highlighting class
+            if (inputPrefix && matchingPrefixes.length > 0) {
+                if (isMatching) {
+                    element.addClass('prefix-matched');
+                } else {
+                    element.addClass('prefix-unmatched');
+                }
+            }
+        });
     }
 
     listenInput(evt: KeyboardEvent) {

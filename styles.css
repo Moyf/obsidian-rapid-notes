@@ -15,6 +15,30 @@
     display: block;
 }
 
+/* Instruction highlighting based on input prefix matching */
+.rapid-notes-modal .prefix-matched {
+    border-radius: 0px;
+    border-bottom: 2px var(--interactive-accent) solid;
+    animation: rapid-notes-highlight-pulse 0.3s ease-out;
+}
+
+.rapid-notes-modal .prefix-unmatched {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+@keyframes rapid-notes-highlight-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 /* Existing Notes Hint */
 .rapid-notes-modal .existing-notes-hint {
     margin-top: 8px;
