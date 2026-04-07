@@ -130,6 +130,55 @@
 }
 
 /* Settings */
+.rapid-notes-settings-intro {
+    margin-bottom: 14px;
+    padding: 0 var(--size-4-4);
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    line-height: var(--line-height-normal);
+}
+
+.rapid-notes-settings-group {
+    margin: 12px 0 18px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background-color: var(--background-secondary-alt);
+}
+
+.rapid-notes-settings-group-title {
+    margin: 0;
+    font-size: 1.05em;
+}
+
+.rapid-notes-settings-group-desc {
+    margin: 6px 0 8px;
+    color: var(--text-muted);
+    font-size: 0.92em;
+}
+
+.rapid-notes-group-heading-desc {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.92em;
+    font-weight: 400;
+}
+
+.rapid-notes-group-custom-content {
+    padding: 0;
+    border-top: none;
+}
+
+.rapid-notes-rule-help-row {
+    margin: 2px 0;
+}
+
+.rapid-notes-rule-help-note {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
 .rapid-notes-add-prefix-entry .setting-item-control {
     align-self: flex-start;
 }

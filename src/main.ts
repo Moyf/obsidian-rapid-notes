@@ -11,12 +11,14 @@ import {
     Editor,
     EditorPosition
 } from 'obsidian';
+import * as ObsidianApi from 'obsidian';
 import { FolderSuggest } from './utils/FolderSuggester';
 import { PromptModal } from './utils/PromptModal';
 import { SuggesterModal } from './utils/SuggesterModal';
 import { arraymove } from './utils/Utils';
 import { KeywordsModal } from './utils/KeywordsModal';
 import { AliasIndexer } from './utils/AliasIndexer';
+import { getLocale } from './i18n';
 import Sortable, { SortableOptions } from 'sortablejs';
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -500,6 +502,99 @@ class RapidNotesSettingsTab extends PluginSettingTab {
     constructor(app: App, plugin: RapidNotes) {
         super(app, plugin);
         this.plugin = plugin;
+        (this as unknown as { icon?: string }).icon = getLocale().settingsIcon;
+    }
+
+    private createSettingGroup(title: string, description: string): {
+        addSetting: (cb: (setting: Setting) => void) => void;
+        addCustomContainer: (cls?: string) => HTMLElement;
+    } {
+        const SettingGroupCtor = (ObsidianApi as unknown as {
+            SettingGroup?: new (containerEl: HTMLElement) => {
+                setHeading: (text: string | DocumentFragment) => unknown;
+                addSetting: (cb: (setting: Setting) => void) => unknown;
+            };
+        }).SettingGroup;
+
+        const hasApiMethods = Boolean(
+            SettingGroupCtor &&
+            typeof SettingGroupCtor.prototype?.setHeading === "function" &&
+            typeof SettingGroupCtor.prototype?.addSetting === "function"
+        );
+
+        if (hasApiMethods && SettingGroupCtor) {
+            const heading = document.createDocumentFragment();
+            const titleEl = document.createElement("div");
+            titleEl.textContent = title;
+            const descEl = document.createElement("div");
+            descEl.className = "rapid-notes-group-heading-desc";
+            descEl.textContent = description;
+            heading.appendChild(titleEl);
+            heading.appendChild(descEl);
+
+            const group = new SettingGroupCtor(this.containerEl);
+            group.setHeading(heading);
+
+            return {
+                addSetting: (cb) => {
+                    group.addSetting(cb);
+                },
+                addCustomContainer: (cls = "") => {
+                    let block: HTMLElement | null = null;
+                    group.addSetting((setting) => {
+                        setting.infoEl.empty();
+                        setting.controlEl.empty();
+                        setting.infoEl.style.display = "none";
+                        setting.controlEl.style.display = "none";
+                        setting.settingEl.style.display = "block";
+                        setting.settingEl.addClass("rapid-notes-group-custom-content");
+                        if (cls) {
+                            block = setting.settingEl.createDiv({ cls });
+                        } else {
+                            block = setting.settingEl.createDiv();
+                        }
+                    });
+                    return block || this.containerEl;
+                }
+            };
+        }
+
+        const wrapper = this.containerEl.createDiv({ cls: "rapid-notes-settings-group" });
+        wrapper.createEl("h3", { text: title, cls: "rapid-notes-settings-group-title" });
+        wrapper.createEl("p", { text: description, cls: "rapid-notes-settings-group-desc" });
+        return {
+            addSetting: (cb) => {
+                cb(new Setting(wrapper));
+            },
+            addCustomContainer: (cls = "") => wrapper.createDiv({ cls })
+        };
+    }
+
+    private createRulesDescription(locale: ReturnType<typeof getLocale>): DocumentFragment {
+        const fragment = document.createDocumentFragment();
+        const lines: Array<[string, string]> = [
+            [locale.addRulesPrefixLabel, locale.addRulesPrefixDesc],
+            [locale.addRulesFilenamePrefixLabel, locale.addRulesFilenamePrefixDesc],
+            [locale.addRulesFolderLabel, locale.addRulesFolderDesc],
+            [locale.addRulesRuleNameLabel, locale.addRulesRuleNameDesc],
+            [locale.addRulesToggleLabel, locale.addRulesToggleDesc]
+        ];
+
+        lines.forEach(([label, description]) => {
+            const row = document.createElement("div");
+            row.className = "rapid-notes-rule-help-row";
+            const labelEl = document.createElement("strong");
+            labelEl.textContent = `${label}: `;
+            row.appendChild(labelEl);
+            row.append(description);
+            fragment.appendChild(row);
+        });
+
+        const hint = document.createElement("p");
+        hint.className = "rapid-notes-rule-help-note";
+        hint.textContent = locale.addRulesImportant;
+        fragment.appendChild(hint);
+        return fragment;
     }
 
     hide(): void {
@@ -507,298 +602,291 @@ class RapidNotesSettingsTab extends PluginSettingTab {
     }
 
     display(): void {
-        const {containerEl} = this;
+        const locale = getLocale();
+        (this as unknown as { icon?: string }).icon = locale.settingsIcon;
+
+        const { containerEl } = this;
         containerEl.empty();
-        containerEl.createEl('h2', {text: 'Rapid Notes settings'});
-        containerEl.createEl('p', {text: '[New!] Now you can also create notes and link to them directly from the editor while typing using the plugin inline commands. You can trigger the command while the cursor is inside the link in double brackets, or just by selecting any text in the editor.'});
-        
+        containerEl.createEl("h2", { text: locale.settingsTitle });
+        containerEl.createEl("p", { text: locale.settingsIntro, cls: "rapid-notes-settings-intro" });
 
-        new Setting(this.containerEl)
-        .setName("Force file creation adding a number at the end if the folder/filename is already in use. Default behavior will open the existing file.")
-        .addToggle((toggle) => {
-            toggle
-            .setValue(this.plugin.settings.forceFileCreation)
-            .onChange((forceFileCreation) => {
-                this.plugin.settings.forceFileCreation = forceFileCreation;
-                this.plugin.saveSettings();
-            });
+        const generalGroup = this.createSettingGroup(locale.groupGeneralTitle, locale.groupGeneralDesc);
+        generalGroup.addSetting((setting) => {
+            setting
+                .setName(locale.forceFileCreationName)
+                .addToggle((toggle) => {
+                    toggle
+                        .setValue(this.plugin.settings.forceFileCreation)
+                        .onChange((forceFileCreation) => {
+                            this.plugin.settings.forceFileCreation = forceFileCreation;
+                            this.plugin.saveSettings();
+                        });
+                });
         });
 
-        new Setting(this.containerEl)
-        .setName("Show prefix list in note creation modal.")
-        .addToggle((toggle) => {
-            toggle
-            .setValue(this.plugin.settings.showModalSuggestions)
-            .onChange((showModalSuggestions) => {
-                this.plugin.settings.showModalSuggestions = showModalSuggestions;
-                this.plugin.saveSettings();
-                // Re-render settings to show/hide dependent options
-                this.display();
-            });
+        generalGroup.addSetting((setting) => {
+            setting
+                .setName(locale.escapeSymbolName)
+                .addText((cb) => {
+                    cb
+                        .setPlaceholder("/")
+                        .setValue(this.plugin.settings.escapeSymbol)
+                        .onChange((escapeSymbol) => {
+                            this.plugin.settings.escapeSymbol = escapeSymbol.trim() || "/";
+                            this.plugin.saveSettings();
+                        });
+                });
         });
 
-        // Only show this setting if modal suggestions are enabled
+        generalGroup.addSetting((setting) => {
+            setting
+                .setName(locale.separatorName)
+                .addText((cb) => {
+                    cb
+                        .setValue(this.plugin.settings.realPrefixSeparator)
+                        .onChange((realPrefixSeparator) => {
+                            this.plugin.settings.realPrefixSeparator = realPrefixSeparator;
+                            this.plugin.saveSettings();
+                        });
+                });
+        });
+
+        generalGroup.addSetting((setting) => {
+            setting
+                .setName(locale.capitalizeFilenameName)
+                .addToggle((toggle) => {
+                    toggle
+                        .setValue(this.plugin.settings.capitalizeFilename)
+                        .onChange((capitalizeFilename) => {
+                            this.plugin.settings.capitalizeFilename = capitalizeFilename;
+                            this.plugin.saveSettings();
+                        });
+                });
+        });
+
+        const suggestionsGroup = this.createSettingGroup(locale.groupSuggestionsTitle, locale.groupSuggestionsDesc);
+        suggestionsGroup.addSetting((setting) => {
+            setting
+                .setName(locale.showModalSuggestionsName)
+                .addToggle((toggle) => {
+                    toggle
+                        .setValue(this.plugin.settings.showModalSuggestions)
+                        .onChange((showModalSuggestions) => {
+                            this.plugin.settings.showModalSuggestions = showModalSuggestions;
+                            this.plugin.saveSettings();
+                            this.display();
+                        });
+                });
+        });
+
         if (this.plugin.settings.showModalSuggestions) {
-            new Setting(this.containerEl)
-            .setName("Hide unmatched rules")
-            .setDesc("When typing in the input field, hide prefix rules that don't match instead of dimming them.")
-            .addToggle((toggle) => {
-                toggle
-                .setValue(this.plugin.settings.hideUnmatchedRules)
-                .onChange((hideUnmatchedRules) => {
-                    this.plugin.settings.hideUnmatchedRules = hideUnmatchedRules;
-                    this.plugin.saveSettings();
-                });
+            suggestionsGroup.addSetting((setting) => {
+                setting
+                    .setName(locale.hideUnmatchedRulesName)
+                    .setDesc(locale.hideUnmatchedRulesDesc)
+                    .addToggle((toggle) => {
+                        toggle
+                            .setValue(this.plugin.settings.hideUnmatchedRules)
+                            .onChange((hideUnmatchedRules) => {
+                                this.plugin.settings.hideUnmatchedRules = hideUnmatchedRules;
+                                this.plugin.saveSettings();
+                            });
+                    });
             });
         }
 
-        new Setting(this.containerEl)
-        .setName("Escape symbol to avoid checking the prefix and moving the note.")
-        .addText((cb) => {
-            cb
-            .setPlaceholder("/")
-            .setValue(this.plugin.settings.escapeSymbol)
-            .onChange((escapeSymbol) => {
-                this.plugin.settings.escapeSymbol = escapeSymbol.trim() || "/";
-                this.plugin.saveSettings();
-            });
+        suggestionsGroup.addSetting((setting) => {
+            setting
+                .setName(locale.showExistingNotesHintName)
+                .setDesc(locale.showExistingNotesHintDesc)
+                .addToggle((toggle) => {
+                    toggle
+                        .setValue(this.plugin.settings.showExistingNotesHint)
+                        .onChange((showExistingNotesHint) => {
+                            this.plugin.settings.showExistingNotesHint = showExistingNotesHint;
+                            this.plugin.saveSettings();
+                            this.display();
+                        });
+                });
         });
 
-        new Setting(this.containerEl)
-        .setName("Optional separator between the prefix and the filename (space character by default).")
-        .addText((cb) => {
-            cb
-            .setValue(this.plugin.settings.realPrefixSeparator)
-            .onChange((realPrefixSeparator) => {
-                this.plugin.settings.realPrefixSeparator = realPrefixSeparator;
-                this.plugin.saveSettings();
+        if (this.plugin.settings.showExistingNotesHint) {
+            suggestionsGroup.addSetting((setting) => {
+                setting
+                    .setName(locale.existingNotesLimitName)
+                    .setDesc(locale.existingNotesLimitDesc)
+                    .addSlider((slider) => {
+                        slider
+                            .setLimits(1, 10, 1)
+                            .setValue(this.plugin.settings.existingNotesLimit)
+                            .setDynamicTooltip()
+                            .onChange((existingNotesLimit) => {
+                                this.plugin.settings.existingNotesLimit = existingNotesLimit;
+                                this.plugin.saveSettings();
+                            });
+                    });
             });
+
+            suggestionsGroup.addSetting((setting) => {
+                setting
+                    .setName(locale.useFuzzyMatchingName)
+                    .setDesc(locale.useFuzzyMatchingDesc)
+                    .addToggle((toggle) => {
+                        toggle
+                            .setValue(this.plugin.settings.useFuzzyMatching)
+                            .onChange((useFuzzyMatching) => {
+                                this.plugin.settings.useFuzzyMatching = useFuzzyMatching;
+                                this.plugin.saveSettings();
+                            });
+                    });
+            });
+        }
+
+        const rulesGroup = this.createSettingGroup(locale.groupRulesTitle, locale.groupRulesDesc);
+        rulesGroup.addSetting((setting) => {
+            setting
+                .setClass("rapid-notes-add-prefix-entry")
+                .setName(locale.addRulesName)
+                .setDesc(this.createRulesDescription(locale))
+                .addButton((button) => {
+                    button
+                        .setTooltip(locale.addRulesTooltip)
+                        .setButtonText(locale.addRuleButtonText)
+                        .setCta()
+                        .onClick(() => {
+                            this.plugin.cleanEmptyEntries();
+                            this.plugin.settings.prefixedFolders.unshift({
+                                ruleName: "",
+                                folder: "",
+                                prefix: "",
+                                filenamePrefix: "",
+                                addCommand: false
+                            });
+                            this.display();
+                        });
+                });
         });
 
-        new Setting(this.containerEl)
-        .setName("Show existing notes hint")
-        .setDesc("Display existing notes that match your input to avoid creating duplicates.")
-        .addToggle((toggle) => {
-            toggle
-            .setValue(this.plugin.settings.showExistingNotesHint)
-            .onChange((showExistingNotesHint) => {
-                this.plugin.settings.showExistingNotesHint = showExistingNotesHint;
+        const rulesList = rulesGroup.addCustomContainer("rapid-notes-rules-container");
+
+        this.plugin.settings.prefixedFolders.forEach((prefixedFolder, index) => {
+            const entryEl = rulesList.createDiv({ cls: "rapid-notes-rule-entry" });
+            entryEl.setAttribute("data-index", String(index));
+
+            const dragHandle = entryEl.createEl("span", {
+                cls: "rapid-notes-drag-handle",
+                attr: { "aria-label": locale.dragHandleAriaLabel, "data-tooltip-position": "top" }
+            });
+            dragHandle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>`;
+
+            const prefixInput = entryEl.createEl("input", {
+                cls: "rapid-notes-field rapid-notes-field--prefix",
+                attr: { type: "text", placeholder: locale.inputPrefixPlaceholder, spellcheck: "false" }
+            });
+            prefixInput.value = prefixedFolder.prefix;
+            prefixInput.addEventListener("change", () => {
+                const newPrefix = prefixInput.value;
+                if (newPrefix && this.plugin.settings.prefixedFolders.some((entry, entryIndex) => entryIndex !== index && entry.prefix === newPrefix)) {
+                    new Notice(locale.noticePrefixAlreadyUsed);
+                    prefixInput.value = prefixedFolder.prefix;
+                    return;
+                }
+                if (newPrefix && /\s/.test(newPrefix)) {
+                    new Notice(locale.noticePrefixContainsSpace);
+                    prefixInput.value = prefixedFolder.prefix;
+                    return;
+                }
+                this.plugin.settings.prefixedFolders[index].prefix = newPrefix;
                 this.plugin.saveSettings();
-                // Re-render settings to show/hide dependent options
+            });
+
+            const filenamePrefixInput = entryEl.createEl("input", {
+                cls: "rapid-notes-field rapid-notes-field--filename-prefix",
+                attr: { type: "text", placeholder: locale.inputFilenamePrefixPlaceholder, spellcheck: "false" }
+            });
+            filenamePrefixInput.value = prefixedFolder.filenamePrefix;
+            filenamePrefixInput.addEventListener("change", () => {
+                this.plugin.settings.prefixedFolders[index].filenamePrefix = filenamePrefixInput.value.trim();
+                this.plugin.saveSettings();
+            });
+
+            const folderWrapper = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--folder search-input-container" });
+            const folderInput = folderWrapper.createEl("input", {
+                attr: { type: "search", placeholder: locale.inputFolderPlaceholder, spellcheck: "false", enterkeyhint: "search" }
+            });
+            folderWrapper.createDiv({ cls: "search-input-clear-button" }).addEventListener("click", () => {
+                folderInput.value = "";
+                this.plugin.settings.prefixedFolders[index].folder = "";
+                this.plugin.saveSettings();
+            });
+            new FolderSuggest(this.app, folderInput);
+            folderInput.value = prefixedFolder.folder;
+            folderInput.addEventListener("change", () => {
+                const newFolder = folderInput.value;
+                if (newFolder && this.plugin.settings.prefixedFolders.some((entry, entryIndex) => entryIndex !== index && entry.folder === newFolder)) {
+                    new Notice(locale.noticeFolderAlreadyUsed);
+                    folderInput.value = prefixedFolder.folder;
+                    return;
+                }
+                this.plugin.settings.prefixedFolders[index].folder = newFolder;
+                this.plugin.saveSettings();
+            });
+
+            const ruleNameInput = entryEl.createEl("input", {
+                cls: "rapid-notes-field rapid-notes-field--rule-name",
+                attr: { type: "text", placeholder: locale.inputRuleNamePlaceholder, spellcheck: "false" }
+            });
+            ruleNameInput.value = prefixedFolder.ruleName;
+            ruleNameInput.addEventListener("change", () => {
+                this.plugin.settings.prefixedFolders[index].ruleName = ruleNameInput.value.trim();
+                this.plugin.saveSettings();
+            });
+
+            const toggleWrapper = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--toggle" });
+            const toggleLabel = toggleWrapper.createEl("label", {
+                cls: "checkbox-container",
+                attr: { tabindex: "0", "aria-label": locale.registerCommandAriaLabel }
+            });
+            const toggleInput = toggleLabel.createEl("input", {
+                attr: { type: "checkbox", tabindex: "0" }
+            });
+            toggleInput.checked = prefixedFolder.addCommand;
+            toggleInput.addEventListener("change", () => {
+                this.plugin.settings.prefixedFolders[index].addCommand = toggleInput.checked;
+                this.plugin.saveSettings();
+            });
+
+            const deleteBtn = entryEl.createDiv({
+                cls: "rapid-notes-field rapid-notes-delete-btn clickable-icon",
+                attr: { "aria-label": locale.deleteButtonAriaLabel }
+            });
+            deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+            deleteBtn.addEventListener("click", () => {
+                this.plugin.settings.prefixedFolders.splice(index, 1);
+                this.plugin.saveSettings();
                 this.display();
             });
         });
 
-        // Only show these settings if existing notes hint is enabled
-        if (this.plugin.settings.showExistingNotesHint) {
-            new Setting(this.containerEl)
-            .setName("Existing notes display limit")
-            .setDesc("Maximum number of existing notes to display in the hint list.")
-            .addSlider((slider) => {
-                slider
-                .setLimits(1, 10, 1)
-                .setValue(this.plugin.settings.existingNotesLimit)
-                .setDynamicTooltip()
-                .onChange((existingNotesLimit) => {
-                    this.plugin.settings.existingNotesLimit = existingNotesLimit;
-                    this.plugin.saveSettings();
-                });
-            });
-
-            new Setting(this.containerEl)
-            .setName("Use fuzzy matching")
-            .setDesc("Enable intelligent fuzzy matching (e.g., 'OB plugin' matches 'Obsidian plugin'). Disable for simple substring matching.")
-            .addToggle((toggle) => {
-                toggle
-                .setValue(this.plugin.settings.useFuzzyMatching)
-                .onChange((useFuzzyMatching) => {
-                    this.plugin.settings.useFuzzyMatching = useFuzzyMatching;
-                    this.plugin.saveSettings();
-                });
-            });
-        }
-
-        new Setting(this.containerEl)
-        .setName("Capitalize note name and new folders.")
-        .addToggle((toggle) => {
-            toggle
-            .setValue(this.plugin.settings.capitalizeFilename)
-            .onChange((capitalizeFilename) => {
-                this.plugin.settings.capitalizeFilename = capitalizeFilename;
-                this.plugin.saveSettings();
-            });
-        });
-
-        new Setting(this.containerEl)
-        .setClass("rapid-notes-add-prefix-entry")
-        .setName("Add new prefixes or create command shortcuts for saving directly into folders.")
-        .setDesc(
-            createFragment((el) => {
-                el.createEl("br");
-                el.createEl("b", {text: "Prefix: "});
-                el.appendText("Keyword that will trigger the action (single words, case sensitive).");
-                el.createEl("br");
-                el.createEl("b", {text: "Real prefix (optional): "});
-                el.appendText("Text that will be prepended to the filename. Can use placeholders such as {{date:YYYY-MM-DD}} (Moment.js formatting).");
-                el.createEl("br");
-                el.createEl("b", {text: "Folder: "});
-                el.appendText("Location for the saved note. Can use placeholders such as {{date:YYYY-MM-DD}} (Moment.js formatting).");
-                el.createEl("br");
-                el.createEl("b", {text: "Rule Name (optional): "});
-                el.appendText("Display name for this rule in the input suggestions. If empty, folder path will be shown.");
-                el.createEl("br");
-                el.createEl("b", {text: "Toggle: "});
-                el.appendText("Create a command to save directly into the folder.");
-                el.createEl("br");
-                el.createEl("br");
-                el.appendText("Important: Command changes will show up in the command palette after an app relaunch or reenabling the plugin.");
-            })
-            )
-            .addButton((button) => {
-                button
-                .setTooltip("Add additional prefix")
-                .setButtonText("+")
-                .setCta()
-                .onClick(() => {
-                    this.plugin.cleanEmptyEntries();
-                    this.plugin.settings.prefixedFolders.unshift({
-                        ruleName: "",
-                        folder: "",
-                        prefix: "",
-                        filenamePrefix: "",
-                        addCommand: false
-                    });
-                    this.display();
-                });
-            });
-
-            // Create a sortable container for the rules list
-            const rulesContainer = containerEl.createDiv({ cls: "rapid-notes-rules-container" });
-
-            this.plugin.settings.prefixedFolders.forEach((prefixedFolder, index) => {
-                const entryEl = rulesContainer.createDiv({ cls: "rapid-notes-rule-entry" });
-                entryEl.setAttribute("data-index", String(index));
-
-                // Drag handle
-                const dragHandle = entryEl.createEl("span", {
-                    cls: "rapid-notes-drag-handle",
-                    attr: { "aria-label": "Drag to reorder", "data-tooltip-position": "top" }
-                });
-                dragHandle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>`;
-
-                // Prefix
-                const prefixInput = entryEl.createEl("input", {
-                    cls: "rapid-notes-field rapid-notes-field--prefix",
-                    attr: { type: "text", placeholder: "Prefix", spellcheck: "false" }
-                });
-                prefixInput.value = prefixedFolder.prefix;
-                prefixInput.addEventListener("change", () => {
-                    const newPrefix = prefixInput.value;
-                    if (newPrefix && this.plugin.settings.prefixedFolders.some((e, i) => i !== index && e.prefix === newPrefix)) {
-                        new Notice("Prefix already used!");
-                        prefixInput.value = prefixedFolder.prefix;
+        if (this.plugin.settings.prefixedFolders.length > 0) {
+            const SortableClass = SortableLib.default || SortableLib;
+            SortableClass.create(rulesList, {
+                handle: ".rapid-notes-drag-handle",
+                animation: 150,
+                ghostClass: "sortable-ghost",
+                dragClass: "sortable-drag",
+                onEnd: (evt: { oldIndex: number | undefined; newIndex: number | undefined }) => {
+                    const oldIndex = evt.oldIndex;
+                    const newIndex = evt.newIndex;
+                    if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) {
                         return;
                     }
-                    if (newPrefix && /\s/.test(newPrefix)) {
-                        new Notice("Prefixes can't contain spaces!");
-                        prefixInput.value = prefixedFolder.prefix;
-                        return;
-                    }
-                    this.plugin.settings.prefixedFolders[index].prefix = newPrefix;
-                    this.plugin.saveSettings();
-                });
-
-                // Real prefix (filename prefix)
-                const filenamePrefixInput = entryEl.createEl("input", {
-                    cls: "rapid-notes-field rapid-notes-field--filename-prefix",
-                    attr: { type: "text", placeholder: "Real prefix", spellcheck: "false" }
-                });
-                filenamePrefixInput.value = prefixedFolder.filenamePrefix;
-                filenamePrefixInput.addEventListener("change", () => {
-                    this.plugin.settings.prefixedFolders[index].filenamePrefix = filenamePrefixInput.value.trim();
-                    this.plugin.saveSettings();
-                });
-
-                // Folder (search input with suggest)
-                const folderWrapper = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--folder search-input-container" });
-                const folderInput = folderWrapper.createEl("input", {
-                    attr: { type: "search", placeholder: "Folder", spellcheck: "false", enterkeyhint: "search" }
-                });
-                folderWrapper.createDiv({ cls: "search-input-clear-button" }).addEventListener("click", () => {
-                    folderInput.value = "";
-                    this.plugin.settings.prefixedFolders[index].folder = "";
-                    this.plugin.saveSettings();
-                });
-                new FolderSuggest(this.app, folderInput);
-                folderInput.value = prefixedFolder.folder;
-                folderInput.addEventListener("change", () => {
-                    const newFolder = folderInput.value;
-                    if (newFolder && this.plugin.settings.prefixedFolders.some((e, i) => i !== index && e.folder === newFolder)) {
-                        new Notice("This folder already has a prefix associated with it.");
-                        folderInput.value = prefixedFolder.folder;
-                        return;
-                    }
-                    this.plugin.settings.prefixedFolders[index].folder = newFolder;
-                    this.plugin.saveSettings();
-                });
-
-                // Rule Name
-                const ruleNameInput = entryEl.createEl("input", {
-                    cls: "rapid-notes-field rapid-notes-field--rule-name",
-                    attr: { type: "text", placeholder: "Rule Name", spellcheck: "false" }
-                });
-                ruleNameInput.value = prefixedFolder.ruleName;
-                ruleNameInput.addEventListener("change", () => {
-                    this.plugin.settings.prefixedFolders[index].ruleName = ruleNameInput.value.trim();
-                    this.plugin.saveSettings();
-                });
-
-                // Command toggle
-                const toggleWrapper = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--toggle" });
-                const toggleLabel = toggleWrapper.createEl("label", {
-                    cls: "checkbox-container",
-                    attr: { tabindex: "0", "aria-label": "Register command for this rule" }
-                });
-                const toggleInput = toggleLabel.createEl("input", {
-                    attr: { type: "checkbox", tabindex: "0" }
-                });
-                toggleInput.checked = prefixedFolder.addCommand;
-                toggleInput.addEventListener("change", () => {
-                    this.plugin.settings.prefixedFolders[index].addCommand = toggleInput.checked;
-                    this.plugin.saveSettings();
-                });
-
-                // Delete button
-                const deleteBtn = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-delete-btn clickable-icon", attr: { "aria-label": "Delete" } });
-                deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
-                deleteBtn.addEventListener("click", () => {
-                    this.plugin.settings.prefixedFolders.splice(index, 1);
+                    const item = this.plugin.settings.prefixedFolders.splice(oldIndex, 1)[0];
+                    this.plugin.settings.prefixedFolders.splice(newIndex, 0, item);
                     this.plugin.saveSettings();
                     this.display();
-                });
+                }
             });
-
-            // Initialize SortableJS on the rules container
-            if (this.plugin.settings.prefixedFolders.length > 0) {
-                const SortableClass = SortableLib.default || SortableLib;
-                SortableClass.create(rulesContainer, {
-                    handle: ".rapid-notes-drag-handle",
-                    animation: 150,
-                    ghostClass: "sortable-ghost",
-                    dragClass: "sortable-drag",
-                    onEnd: (evt: { oldIndex: number | undefined; newIndex: number | undefined }) => {
-                        const oldIndex = evt.oldIndex;
-                        const newIndex = evt.newIndex;
-                        if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) {
-                            return;
-                        }
-                        const item = this.plugin.settings.prefixedFolders.splice(oldIndex, 1)[0];
-                        this.plugin.settings.prefixedFolders.splice(newIndex, 0, item);
-                        this.plugin.saveSettings();
-                        // Re-render to sync index-based onChange handlers
-                        this.display();
-                    }
-                });
-            }
         }
     }
+}
