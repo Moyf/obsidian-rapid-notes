@@ -21,7 +21,7 @@ const zhCn: RapidNotesLocale = {
     promptEscapePrefixHelpText: "使用 <code>{symbol}</code> 跳过前缀规则。",
     settingsIcon: "sparkles",
     settingsTitle: "Rapid Notes",
-    settingsIntro: "基础用法：在下方「前缀规则」中配置好前缀对应的文件夹，使用指令「xxx」快速创建笔记。你也可以选中文本后，用「ooo」来快速将它转换成新的笔记文件。",
+    settingsIntro: "基础用法：在下方「前缀规则」中配置好前缀对应的文件夹，使用指令「Rapid Notes：在……新建笔记」快速创建笔记。你也可以选中文本后，用「Rapid Notes：新建内联笔记」来快速将它转换成新的笔记文件。",
     groupGeneralTitle: "通用行为",
     groupGeneralDesc: "控制文件名和文件夹的创建方式。",
     groupSuggestionsTitle: "建议与匹配",
