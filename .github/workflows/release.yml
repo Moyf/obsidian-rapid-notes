@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           mkdir "$PLUGIN_NAME"
-          cp main.js manifest.json styles.css "$PLUGIN_NAME"
+          cp dist/main.js manifest.json styles.css "$PLUGIN_NAME"
           zip -r "$PLUGIN_NAME-${{ steps.tag.outputs.tag }}.zip" "$PLUGIN_NAME"
 
       - name: Create or update GitHub release
@@ -68,7 +68,7 @@ jobs:
           name: ${{ steps.tag.outputs.tag }}
           files: |
             ${{ env.PLUGIN_NAME }}-${{ steps.tag.outputs.tag }}.zip
-            main.js
+            dist/main.js
             manifest.json
             styles.css
           draft: false
