@@ -595,8 +595,8 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         const lines: Array<[string, string]> = [
             [locale.addRulesPrefixLabel, locale.addRulesPrefixDesc],
             [locale.addRulesFilenamePrefixLabel, locale.addRulesFilenamePrefixDesc],
-            [locale.addRulesFolderLabel, locale.addRulesFolderDesc],
             [locale.addRulesRuleNameLabel, locale.addRulesRuleNameDesc],
+            [locale.addRulesFolderLabel, locale.addRulesFolderDesc],
             [locale.addRulesToggleLabel, locale.addRulesToggleDesc]
         ];
 
@@ -803,7 +803,11 @@ class RapidNotesSettingsTab extends PluginSettingTab {
             });
             dragHandle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>`;
 
-            const prefixInput = entryEl.createEl("input", {
+            const contentEl = entryEl.createDiv({ cls: "rapid-notes-rule-content" });
+            const topRowEl = contentEl.createDiv({ cls: "rapid-notes-rule-row rapid-notes-rule-row--top" });
+            const bottomRowEl = contentEl.createDiv({ cls: "rapid-notes-rule-row rapid-notes-rule-row--bottom" });
+
+            const prefixInput = topRowEl.createEl("input", {
                 cls: "rapid-notes-field rapid-notes-field--prefix",
                 attr: { type: "text", placeholder: locale.inputPrefixPlaceholder, spellcheck: "false" }
             });
@@ -824,7 +828,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 this.plugin.saveSettings();
             });
 
-            const filenamePrefixInput = entryEl.createEl("input", {
+            const filenamePrefixInput = topRowEl.createEl("input", {
                 cls: "rapid-notes-field rapid-notes-field--filename-prefix",
                 attr: { type: "text", placeholder: locale.inputFilenamePrefixPlaceholder, spellcheck: "false" }
             });
@@ -834,7 +838,24 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 this.plugin.saveSettings();
             });
 
-            const folderWrapper = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--folder search-input-container" });
+            const ruleNameWrapper = topRowEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--rule-name rapid-notes-rule-name-wrap" });
+            const ruleNameIcon = ruleNameWrapper.createEl("span", {
+                cls: "rapid-notes-rule-name-icon",
+                attr: { "aria-hidden": "true" }
+            });
+            ruleNameIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/><path d="M7 7h.01"/></svg>`;
+
+            const ruleNameInput = ruleNameWrapper.createEl("input", {
+                cls: "rapid-notes-rule-name-input",
+                attr: { type: "text", placeholder: locale.inputRuleNamePlaceholder, spellcheck: "false" }
+            });
+            ruleNameInput.value = prefixedFolder.ruleName;
+            ruleNameInput.addEventListener("change", () => {
+                this.plugin.settings.prefixedFolders[index].ruleName = ruleNameInput.value.trim();
+                this.plugin.saveSettings();
+            });
+
+            const folderWrapper = bottomRowEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--folder search-input-container" });
             const folderInput = folderWrapper.createEl("input", {
                 attr: { type: "search", placeholder: locale.inputFolderPlaceholder, spellcheck: "false", enterkeyhint: "search" }
             });
@@ -856,17 +877,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 this.plugin.saveSettings();
             });
 
-            const ruleNameInput = entryEl.createEl("input", {
-                cls: "rapid-notes-field rapid-notes-field--rule-name",
-                attr: { type: "text", placeholder: locale.inputRuleNamePlaceholder, spellcheck: "false" }
-            });
-            ruleNameInput.value = prefixedFolder.ruleName;
-            ruleNameInput.addEventListener("change", () => {
-                this.plugin.settings.prefixedFolders[index].ruleName = ruleNameInput.value.trim();
-                this.plugin.saveSettings();
-            });
-
-            const toggleWrapper = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--toggle" });
+            const toggleWrapper = bottomRowEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--toggle" });
             new ObsidianApi.ToggleComponent(toggleWrapper)
                 .setTooltip(locale.registerCommandAriaLabel)
                 .setValue(prefixedFolder.addCommand)
