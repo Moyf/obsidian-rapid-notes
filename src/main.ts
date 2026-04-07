@@ -577,6 +577,8 @@ class RapidNotesSettingsTab extends PluginSettingTab {
 
     private createRulesDescription(locale: ReturnType<typeof getLocale>): DocumentFragment {
         const fragment = document.createDocumentFragment();
+        const list = document.createElement("ul");
+        list.className = "rapid-notes-rule-help-list";
         const lines: Array<[string, string]> = [
             [locale.addRulesPrefixLabel, locale.addRulesPrefixDesc],
             [locale.addRulesFilenamePrefixLabel, locale.addRulesFilenamePrefixDesc],
@@ -586,14 +588,16 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         ];
 
         lines.forEach(([label, description]) => {
-            const row = document.createElement("div");
+            const row = document.createElement("li");
             row.className = "rapid-notes-rule-help-row";
             const labelEl = document.createElement("strong");
             labelEl.textContent = `${label}: `;
             row.appendChild(labelEl);
             row.append(description);
-            fragment.appendChild(row);
+            list.appendChild(row);
         });
+
+        fragment.appendChild(list);
 
         const hint = document.createElement("p");
         hint.className = "rapid-notes-rule-help-note";
