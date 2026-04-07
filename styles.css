@@ -15,39 +15,350 @@
     display: block;
 }
 
-/* Settings */
-.rapid-notes_search {
-    width: 100%;
+/* Instruction highlighting based on input prefix matching */
+
+/* Default matched state (with animations and underline) */
+.prompt-instructions .prefix-matched {
+    border-bottom: 2px var(--interactive-accent) solid;
+    animation: rapid-notes-highlight-pulse 0.3s ease-out;
 }
 
+/* In hide-unmatched mode, matched elements have no special styling */
+.prompt-instructions.hide-unmatched .prefix-matched {
+    border-bottom: none;
+    animation: none;
+}
+
+/* Default unmatched state (dimmed) */
+.prompt-instructions .prefix-unmatched {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+/* In hide-unmatched mode, unmatched elements are hidden */
+.prompt-instructions.hide-unmatched .prefix-unmatched {
+    display: none !important;
+}
+
+@keyframes rapid-notes-highlight-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Existing Notes Hint */
+.rapid-notes-modal .existing-notes-hint {
+    margin-top: 8px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+.rapid-notes-modal .existing-notes-count {
+    font-weight: bold;
+    color: var(--interactive-accent);
+}
+
+.rapid-notes-modal .matching-files-list {
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+}
+
+.rapid-notes-modal .matching-file-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--background-modifier-border);
+    transition: background-color 0.1s ease;
+    display: flex;
+    gap: 0.5em;
+}
+
+.rapid-notes-modal .matching-file-item:last-child {
+    border-bottom: none;
+}
+
+.rapid-notes-modal .matching-file-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.rapid-notes-modal .matching-file-item.is-selected {
+    background-color: var(--background-modifier-hover);
+    outline: 1px solid var(--interactive-accent);
+    outline-offset: -1px;
+}
+
+.rapid-notes-modal .matching-file-item .file-name {
+    display: block;
+    font-size: 1em;
+    font-weight: 500;
+    color: var(--text-normal);
+    margin-bottom: 2px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 75%;
+}
+
+.rapid-notes-modal .matching-file-item .file-path {
+    display: block;
+    font-size: 0.8em;
+    color: var(--text-muted);
+    align-content: center;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.rapid-notes-modal .matching-file-more {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+}
+
+/* Settings */
 .rapid-notes-add-prefix-entry .setting-item-control {
     align-self: flex-start;
 }
 
-.rapid-notes-settings-entry {
-    margin-top: 0!important;
-    padding-top: 0;
+/* Rule entry row */
+.rapid-notes-rule-entry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
-@media screen and (min-width: 780px) {
-    .rapid-notes-settings-entry input[type="text"]:first-child {
-        max-width: 60px;
-    }
-    .rapid-notes-settings-entry input[type="text"]:nth-child(2) {
-        max-width: 90px;
-    }
+.rapid-notes-rule-entry:last-child {
+    border-bottom: none;
+}
+
+/* Shared field base */
+.rapid-notes-field {
+    height: 28px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+/* Individual field widths */
+.rapid-notes-field--prefix {
+    width: 60px;
+}
+
+.rapid-notes-field--filename-prefix {
+    width: 10em;
+}
+
+.rapid-notes-field--folder {
+    flex: 1 1 0;
+    min-width: 80px;
+    height: auto;
+}
+
+.rapid-notes-field--folder input[type="search"] {
+    height: 28px;
+    padding: 0 6px 0 28px; /* left padding for search icon */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.rapid-notes-field--rule-name {
+    width: 8em;
+}
+
+.rapid-notes-field--toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    margin-left: 6px;
+}
+
+.rapid-notes-delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.rapid-notes-delete-btn:hover {
+    color: var(--text-error);
+    background-color: var(--background-modifier-error-hover, var(--background-modifier-hover));
 }
 
 @media screen and (max-width: 780px) {
-    .rapid-notes-settings-entry .setting-item-control {
+    .rapid-notes-rule-entry {
         flex-wrap: wrap;
-        justify-content: space-between;
     }
 
-    .rapid-notes-settings-entry input[type="text"]:first-child,
-    .rapid-notes-settings-entry input[type="text"]:nth-child(2) {
-        flex-grow: 1;
-        flex-basis: 44%;
-        width: 100%;
+    .rapid-notes-field--prefix,
+    .rapid-notes-field--filename-prefix {
+        flex: 1 1 calc(50% - 3px);
+        width: auto;
     }
+
+    .rapid-notes-field--folder,
+    .rapid-notes-field--rule-name {
+        flex: 1 1 100%;
+        width: auto;
+    }
+}
+
+/* Drag and Drop */
+.rapid-notes-rules-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.sortable-ghost {
+    opacity: 0.35;
+    background-color: var(--background-modifier-hover);
+    border-radius: 4px;
+    outline: 2px dashed var(--interactive-accent);
+    outline-offset: -2px;
+}
+
+.sortable-drag {
+    opacity: 0.95;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
+    background-color: var(--background-primary);
+}
+
+/* Drag handle */
+.rapid-notes-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    cursor: grab;
+    color: var(--text-muted);
+    opacity: 0.4;
+    flex-shrink: 0;
+    border-radius: 3px;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.rapid-notes-rule-entry:hover .rapid-notes-drag-handle {
+    opacity: 0.75;
+}
+
+.rapid-notes-drag-handle:hover {
+    opacity: 1 !important;
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+}
+
+.rapid-notes-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Keywords Editor */
+.keywords-editor-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 16px;
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.keyword-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.keyword-remove {
+    margin-left: 8px;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.keyword-remove:hover {
+    opacity: 1;
+}
+
+.add-keyword-container {
+    padding: 0 16px 16px;
+}
+
+.add-keyword-container input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.add-keyword-container input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+
+.modal-button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 16px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal-button-container button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.modal-button-container .mod-cancel {
+    background-color: var(--interactive-normal);
+    color: var(--text-normal);
+}
+
+.modal-button-container .mod-cancel:hover {
+    background-color: var(--interactive-hover);
+}
+
+.modal-button-container .mod-cta {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.modal-button-container .mod-cta:hover {
+    background-color: var(--interactive-accent-hover);
 }
