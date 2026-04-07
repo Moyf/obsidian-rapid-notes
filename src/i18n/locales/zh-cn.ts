@@ -2,8 +2,8 @@ import type { RapidNotesLocale } from "../types";
 
 const zhCn: RapidNotesLocale = {
     settingsIcon: "sparkles",
-    settingsTitle: "Rapid Notes 设置",
-    settingsIntro: "使用前缀、快捷命令和编辑器内联命令，更快创建并归档笔记。",
+    settingsTitle: "Rapid Notes",
+    settingsIntro: "基础用法：在下方「前缀规则」中配置好前缀对应的文件夹，使用指令「xxx」快速创建笔记。你也可以选中文本后，用「ooo」来快速将它转换成新的笔记文件。",
     groupGeneralTitle: "通用行为",
     groupGeneralDesc: "控制文件名和文件夹的创建方式。",
     groupSuggestionsTitle: "建议与匹配",

@@ -505,7 +505,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         (this as unknown as { icon?: string }).icon = getLocale().settingsIcon;
     }
 
-    private createSettingGroup(title: string, description: string): {
+    private createSettingGroup(title?: string): {
         addSetting: (cb: (setting: Setting) => void) => void;
         addCustomContainer: (cls?: string) => HTMLElement;
     } {
@@ -523,17 +523,15 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         );
 
         if (hasApiMethods && SettingGroupCtor) {
-            const heading = document.createDocumentFragment();
-            const titleEl = document.createElement("div");
-            titleEl.textContent = title;
-            const descEl = document.createElement("div");
-            descEl.className = "rapid-notes-group-heading-desc";
-            descEl.textContent = description;
-            heading.appendChild(titleEl);
-            heading.appendChild(descEl);
-
             const group = new SettingGroupCtor(this.containerEl);
-            group.setHeading(heading);
+            const headingText = (title || "").trim();
+            if (headingText) {
+                const heading = document.createDocumentFragment();
+                const titleEl = document.createElement("div");
+                titleEl.textContent = headingText;
+                heading.appendChild(titleEl);
+                group.setHeading(heading);
+            }
 
             return {
                 addSetting: (cb) => {
@@ -560,8 +558,10 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         }
 
         const wrapper = this.containerEl.createDiv({ cls: "rapid-notes-settings-group" });
-        wrapper.createEl("h3", { text: title, cls: "rapid-notes-settings-group-title" });
-        wrapper.createEl("p", { text: description, cls: "rapid-notes-settings-group-desc" });
+        const headingText = (title || "").trim();
+        if (headingText) {
+            wrapper.createEl("h3", { text: headingText, cls: "rapid-notes-settings-group-title" });
+        }
         return {
             addSetting: (cb) => {
                 cb(new Setting(wrapper));
@@ -610,7 +610,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         containerEl.createEl("h2", { text: locale.settingsTitle });
         containerEl.createEl("p", { text: locale.settingsIntro, cls: "rapid-notes-settings-intro" });
 
-        const generalGroup = this.createSettingGroup(locale.groupGeneralTitle, locale.groupGeneralDesc);
+        const generalGroup = this.createSettingGroup();
         generalGroup.addSetting((setting) => {
             setting
                 .setName(locale.forceFileCreationName)
@@ -664,7 +664,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 });
         });
 
-        const suggestionsGroup = this.createSettingGroup(locale.groupSuggestionsTitle, locale.groupSuggestionsDesc);
+        const suggestionsGroup = this.createSettingGroup(locale.groupSuggestionsTitle);
         suggestionsGroup.addSetting((setting) => {
             setting
                 .setName(locale.showModalSuggestionsName)
@@ -742,7 +742,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
             });
         }
 
-        const rulesGroup = this.createSettingGroup(locale.groupRulesTitle, locale.groupRulesDesc);
+        const rulesGroup = this.createSettingGroup(locale.groupRulesTitle);
         rulesGroup.addSetting((setting) => {
             setting
                 .setClass("rapid-notes-add-prefix-entry")
