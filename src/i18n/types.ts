@@ -5,6 +5,7 @@ export interface RapidNotesLocale {
     commandNewNoteNewPane: string;
     commandNewNoteNewWindow: string;
     commandNewNoteInFolderPrefix: string;
+    commandNewNoteInFolderTemplate: string;
     commandOpenInNewTabSuffix: string;
     commandOpenInBackgroundTabSuffix: string;
     commandOpenInNewPaneSuffix: string;
@@ -31,7 +32,9 @@ export interface RapidNotesLocale {
     hideUnmatchedRulesName: string;
     hideUnmatchedRulesDesc: string;
     escapeSymbolName: string;
+    escapeSymbolDesc: string;
     separatorName: string;
+    separatorDesc: string;
     showExistingNotesHintName: string;
     showExistingNotesHintDesc: string;
     existingNotesLimitName: string;

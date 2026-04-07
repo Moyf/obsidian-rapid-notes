@@ -65,7 +65,7 @@ const DEFAULT_SETTINGS = {
     showModalSuggestions: true,
     capitalizeFilename: true,
     escapeSymbol: "/",
-    realPrefixSeparator: " ",
+    realPrefixSeparator: "",
     showExistingNotesHint: true,
     existingNotesLimit: 3,
     useFuzzyMatching: true,
@@ -167,7 +167,19 @@ export default class RapidNotes extends Plugin {
     addCommands(plugin: RapidNotes) {
         const locale = getLocale();
         const commandNameForFolder = (folder: string, suffix: string = "") => {
-            return `${locale.commandNewNoteInFolderPrefix} ${folder}${suffix ? ` ${suffix}` : ""}`;
+            const baseName = locale.commandNewNoteInFolderTemplate
+                ? locale.commandNewNoteInFolderTemplate.replace("{folder}", folder)
+                : `${locale.commandNewNoteInFolderPrefix} ${folder}`;
+            return `${baseName}${suffix ? ` ${suffix}` : ""}`;
+        };
+        const folderCommandIdBase = (folder: string) => {
+            let hash = 2166136261;
+            for (let i = 0; i < folder.length; i++) {
+                hash ^= folder.charCodeAt(i);
+                hash = Math.imul(hash, 16777619);
+            }
+            const hashText = (hash >>> 0).toString(16).padStart(8, "0");
+            return `new-prefixed-note-folder-${hashText}`;
         };
 
         plugin.addCommand({
@@ -232,8 +244,9 @@ export default class RapidNotes extends Plugin {
             }
 
             if(prefixedFolder.addCommand && prefixedFolder.folder) {
+                const commandIdBase = folderCommandIdBase(prefixedFolder.folder);
                 plugin.addCommand({
-                    id: "new-prefixed-note-" + prefixedFolder.folder,
+                    id: commandIdBase,
                     name: commandNameForFolder(prefixedFolder.folder),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
@@ -241,7 +254,7 @@ export default class RapidNotes extends Plugin {
                     }
                 });
                 plugin.addCommand({
-                    id: "new-prefixed-note-" + prefixedFolder.folder + "-new-tab",
+                    id: commandIdBase + "-new-tab",
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewTabSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
@@ -249,7 +262,7 @@ export default class RapidNotes extends Plugin {
                     }
                 });
                 plugin.addCommand({
-                    id: "new-prefixed-note-" + prefixedFolder.folder + "-new-background-tab",
+                    id: commandIdBase + "-new-background-tab",
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInBackgroundTabSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
@@ -257,7 +270,7 @@ export default class RapidNotes extends Plugin {
                     }
                 });
                 plugin.addCommand({
-                    id: "new-prefixed-note-" + prefixedFolder.folder + "-new-pane",
+                    id: commandIdBase + "-new-pane",
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewPaneSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
@@ -265,7 +278,7 @@ export default class RapidNotes extends Plugin {
                     }
                 });
                 plugin.addCommand({
-                    id: "new-prefixed-note-" + prefixedFolder.folder + "-new-window",
+                    id: commandIdBase + "-new-window",
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewWindowSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
@@ -343,14 +356,14 @@ export default class RapidNotes extends Plugin {
     checkPrefix(filename: string) {
         let folderPath = "";
         const prefixedFolders = this.getFoldersByPrefix(this.settings.prefixedFolders);
-        const firstSpaceIndex = filename.indexOf(" ");
-        if (firstSpaceIndex >= 0) {
-            // Prompt value has a space
-            const prefix = filename.substring(0, firstSpaceIndex);
+        const separator = " ";
+        const separatorIndex = filename.indexOf(separator);
+        if (separatorIndex >= 0) {
+            const prefix = filename.substring(0, separatorIndex);
             if (prefix in prefixedFolders) {
                 // Prefix match found
                 folderPath = prefixedFolders[prefix].folder;
-                filename = filename.substring(firstSpaceIndex + 1);
+                filename = filename.substring(separatorIndex + separator.length);
 
                 // Check if a prefix needs to be added to the note, and add it correctly if the value is a path
                 const filenamePrefix = prefixedFolders[prefix].filenamePrefix?.trim();
@@ -636,25 +649,13 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         generalGroup.addSetting((setting) => {
             setting
                 .setName(locale.escapeSymbolName)
+                .setDesc(locale.escapeSymbolDesc)
                 .addText((cb) => {
                     cb
                         .setPlaceholder("/")
                         .setValue(this.plugin.settings.escapeSymbol)
                         .onChange((escapeSymbol) => {
                             this.plugin.settings.escapeSymbol = escapeSymbol.trim() || "/";
-                            this.plugin.saveSettings();
-                        });
-                });
-        });
-
-        generalGroup.addSetting((setting) => {
-            setting
-                .setName(locale.separatorName)
-                .addText((cb) => {
-                    cb
-                        .setValue(this.plugin.settings.realPrefixSeparator)
-                        .onChange((realPrefixSeparator) => {
-                            this.plugin.settings.realPrefixSeparator = realPrefixSeparator;
                             this.plugin.saveSettings();
                         });
                 });
@@ -752,6 +753,20 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         }
 
         const rulesGroup = this.createSettingGroup(locale.groupRulesTitle);
+        rulesGroup.addSetting((setting) => {
+            setting
+                .setName(locale.separatorName)
+                .setDesc(locale.separatorDesc)
+                .addText((cb) => {
+                    cb
+                        .setValue(this.plugin.settings.realPrefixSeparator ?? "")
+                        .onChange((realPrefixSeparator) => {
+                            this.plugin.settings.realPrefixSeparator = realPrefixSeparator;
+                            this.plugin.saveSettings();
+                        });
+                });
+        });
+
         rulesGroup.addSetting((setting) => {
             setting
                 .setClass("rapid-notes-add-prefix-entry")
@@ -852,18 +867,14 @@ class RapidNotesSettingsTab extends PluginSettingTab {
             });
 
             const toggleWrapper = entryEl.createDiv({ cls: "rapid-notes-field rapid-notes-field--toggle" });
-            const toggleLabel = toggleWrapper.createEl("label", {
-                cls: "checkbox-container",
-                attr: { tabindex: "0", "aria-label": locale.registerCommandAriaLabel }
-            });
-            const toggleInput = toggleLabel.createEl("input", {
-                attr: { type: "checkbox", tabindex: "0" }
-            });
-            toggleInput.checked = prefixedFolder.addCommand;
-            toggleInput.addEventListener("change", () => {
-                this.plugin.settings.prefixedFolders[index].addCommand = toggleInput.checked;
-                this.plugin.saveSettings();
-            });
+            new ObsidianApi.ToggleComponent(toggleWrapper)
+                .setTooltip(locale.registerCommandAriaLabel)
+                .setValue(prefixedFolder.addCommand)
+                .onChange((checked) => {
+                    this.plugin.settings.prefixedFolders[index].addCommand = checked;
+                    this.plugin.saveSettings();
+                    new Notice(locale.addRulesImportant);
+                });
 
             const deleteBtn = entryEl.createDiv({
                 cls: "rapid-notes-field rapid-notes-delete-btn clickable-icon",

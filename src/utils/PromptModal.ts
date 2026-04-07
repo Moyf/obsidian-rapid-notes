@@ -24,6 +24,7 @@ export class PromptModal extends Modal {
     visibleMatchingFiles: TFile[] = [];
     selectedMatchIndex = -1;
     hasNavigatedSuggestions = false;
+    lastHighlightKey = "";
     locale = getLocale();
 
     constructor(
@@ -119,7 +120,7 @@ export class PromptModal extends Modal {
      * This handles cases where user types "插件 A" and we want to search for "A"
      */
     removeInputPrefix(inputValue: string): string {
-        const separator = this.settings.realPrefixSeparator || " ";
+        const separator = " ";
         
         // Check if the input starts with any configured prefix (not filenamePrefix)
         for (const prefixedFolder of this.settings.prefixedFolders) {
@@ -433,11 +434,19 @@ export class PromptModal extends Modal {
             return;
         }
 
-        const separator = this.settings.realPrefixSeparator || " ";
+        const separator = " ";
         const instructionsListEl = this.instructionElements[0].parentElement as HTMLElement;
-        
+        const separatorIndex = inputValue.indexOf(separator);
+        const hasSeparator = separatorIndex >= 0;
+        const inputPrefix = hasSeparator ? inputValue.substring(0, separatorIndex) : "";
+        const baseHighlightKey = `${hasSeparator ? "1" : "0"}|${inputPrefix}|${this.settings.hideUnmatchedRules ? "1" : "0"}`;
+
+        if (baseHighlightKey === this.lastHighlightKey) {
+            return;
+        }
+
         // Only start matching detection if input contains the separator
-        if (!inputValue.includes(separator)) {
+        if (!hasSeparator) {
             // No separator found, reset all elements to normal state
             instructionsListEl?.removeClass('hide-unmatched');
             this.instructionElements.forEach((element) => {
@@ -445,16 +454,13 @@ export class PromptModal extends Modal {
                 element.removeClass('prefix-unmatched');
                 element.style.display = '';
             });
+            this.lastHighlightKey = baseHighlightKey;
             return;
         }
 
         // Find all matching prefixes based on input prefix logic
         const matchingPrefixes: string[] = [];
-        
-        // Extract the potential prefix from input (before separator)
-        const separatorIndex = inputValue.indexOf(separator);
-        const inputPrefix = inputValue.substring(0, separatorIndex);
-        
+
         // Check which configured prefixes match the input prefix
         for (const prefixedFolder of this.settings.prefixedFolders) {
             const prefixes = prefixedFolder.prefix ? [prefixedFolder.prefix] : [];
@@ -499,6 +505,7 @@ export class PromptModal extends Modal {
                 element.style.display = '';
             }
         });
+        this.lastHighlightKey = baseHighlightKey;
     }
 
     listenInput(evt: KeyboardEvent) {
