@@ -140,18 +140,32 @@ export class PromptModal extends Modal {
     calculateMatchScore(filename: string, searchTerm: string): number {
         const filenameLower = filename.toLowerCase();
         const searchLower = searchTerm.toLowerCase();
+
+        if (!searchLower.trim()) {
+            return 0;
+        }
+
+        // 1. Exact title match
+        if (filenameLower === searchLower) {
+            return 140;
+        }
+
+        // 2. Title starts with query
+        if (filenameLower.startsWith(searchLower)) {
+            return 120;
+        }
         
-        // 1. Exact phrase match (100 points) - highest priority
+        // 3. Title contains query
         if (filenameLower.includes(searchLower)) {
             return 100;
         }
         
-        // 2. Word sequence match (80 points) - words appear in order
+        // 4. Word sequence match - words appear in order
         if (this.isWordSequenceMatch(filenameLower, searchLower)) {
             return 80;
         }
         
-        // 3. Word set match (60 points) - all words present, any order
+        // 5. Word set match - all words present, any order
         if (this.isWordSetMatch(filenameLower, searchLower)) {
             return 60;
         }
@@ -241,9 +255,10 @@ export class PromptModal extends Modal {
                 const filename = file.basename.toLowerCase();
                 const isTitleMatch = filename.includes(inputLower) || filename.includes(cleanInputLower);
                 if (isTitleMatch) {
+                    const score = this.calculateMatchScore(file.basename, searchTerm);
                     matchedFilesByPath.set(file.path, {
                         file,
-                        score: 100,
+                        score: score > 0 ? score : 100,
                         matchType: 'title'
                     });
                 }
@@ -274,6 +289,10 @@ export class PromptModal extends Modal {
             .sort((a, b) => {
                 if (b.score !== a.score) {
                     return b.score - a.score;
+                }
+
+                if (a.file.basename.length !== b.file.basename.length) {
+                    return a.file.basename.length - b.file.basename.length;
                 }
 
                 return a.file.basename.localeCompare(b.file.basename);
