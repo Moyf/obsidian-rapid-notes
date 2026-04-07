@@ -2,6 +2,7 @@ import {
     App,
     Modal,
     Instruction,
+    setIcon,
     TFile,
 } from "obsidian";
 import { RapidNotesSettings } from "../main";
@@ -330,10 +331,36 @@ export class PromptModal extends Modal {
                     ? (result?.matchedAlias || searchTerm)
                     : file.basename;
 
-                fileEl.innerHTML = `
-                    <span class="file-name">${displayName}</span>
-                    <span class="file-path">${file.path}</span>
-                `;
+                const titleRowEl = document.createElement('div');
+                titleRowEl.className = 'file-title-row';
+
+                const nameEl = document.createElement('span');
+                nameEl.className = 'file-name';
+                nameEl.textContent = displayName;
+                titleRowEl.appendChild(nameEl);
+
+                if (matchType === 'alias') {
+                    const aliasIndicatorEl = document.createElement('span');
+                    aliasIndicatorEl.className = 'file-alias-indicator svg-icon';
+                    setIcon(aliasIndicatorEl, 'forward');
+                    titleRowEl.appendChild(aliasIndicatorEl);
+                }
+
+                const pathRowEl = document.createElement('div');
+                pathRowEl.className = 'file-path-row';
+
+                const pathIconEl = document.createElement('span');
+                pathIconEl.className = 'file-path-icon svg-icon';
+                setIcon(pathIconEl, 'folder-open');
+                pathRowEl.appendChild(pathIconEl);
+
+                const pathEl = document.createElement('span');
+                pathEl.className = 'file-path';
+                pathEl.textContent = file.path;
+                pathRowEl.appendChild(pathEl);
+
+                fileEl.appendChild(titleRowEl);
+                fileEl.appendChild(pathRowEl);
                 
                 // Click to open existing file
                 fileEl.addEventListener('click', () => {
