@@ -182,8 +182,13 @@
     border-top: none;
 }
 
-.rapid-notes-rule-help-row {
+.rapid-notes-rule-help-list {
     margin: 2px 0;
+    padding-left: 18px;
+}
+
+.rapid-notes-rule-help-row {
+    margin: 4px 0;
 }
 
 .rapid-notes-rule-help-note {

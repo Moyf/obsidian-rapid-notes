@@ -1,4 +1,22 @@
 export interface RapidNotesLocale {
+    commandNewNoteCurrentTab: string;
+    commandNewNoteNewTab: string;
+    commandNewNoteBackgroundTab: string;
+    commandNewNoteNewPane: string;
+    commandNewNoteNewWindow: string;
+    commandNewNoteInFolderPrefix: string;
+    commandOpenInNewTabSuffix: string;
+    commandOpenInBackgroundTabSuffix: string;
+    commandOpenInNewPaneSuffix: string;
+    commandOpenInNewWindowSuffix: string;
+    commandNewInlineNoteNewTab: string;
+    commandNewInlineNoteBackgroundTab: string;
+    commandNewInlineNoteNewPane: string;
+    commandNewInlineNoteNewWindow: string;
+    existingNotesFoundMatchingText: string;
+    matchingFilesMoreText: string;
+    promptPrefixedFoldersHeading: string;
+    promptEscapePrefixHelpText: string;
     settingsIcon: string;
     settingsTitle: string;
     settingsIntro: string;

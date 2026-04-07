@@ -165,9 +165,14 @@ export default class RapidNotes extends Plugin {
     }
 
     addCommands(plugin: RapidNotes) {
+        const locale = getLocale();
+        const commandNameForFolder = (folder: string, suffix: string = "") => {
+            return `${locale.commandNewNoteInFolderPrefix} ${folder}${suffix ? ` ${suffix}` : ""}`;
+        };
+
         plugin.addCommand({
             id: "new-prefixed-note",
-            name: "New note in current tab",
+            name: locale.commandNewNoteCurrentTab,
             callback: async () => {
                 const promptValue = await this.promptNewNote();
                 if(promptValue) {
@@ -178,7 +183,7 @@ export default class RapidNotes extends Plugin {
         });
         plugin.addCommand({
             id: "new-prefixed-note-new-tab",
-            name: "New note in new tab",
+            name: locale.commandNewNoteNewTab,
             callback: async () => {
                 const promptValue = await this.promptNewNote();
                 if(promptValue) {
@@ -189,7 +194,7 @@ export default class RapidNotes extends Plugin {
         });
         plugin.addCommand({
             id: "new-prefixed-note-new-background-tab",
-            name: "New note in background tab",
+            name: locale.commandNewNoteBackgroundTab,
             callback: async () => {
                 const promptValue = await this.promptNewNote();
                 if(promptValue) {
@@ -200,7 +205,7 @@ export default class RapidNotes extends Plugin {
         });
         plugin.addCommand({
             id: "new-prefixed-note-new-pane",
-            name: "New note in new pane",
+            name: locale.commandNewNoteNewPane,
             callback: async () => {
                 const promptValue = await this.promptNewNote();
                 if(promptValue) {
@@ -211,7 +216,7 @@ export default class RapidNotes extends Plugin {
         });
         plugin.addCommand({
             id: "new-prefixed-note-new-window",
-            name: "New note in new window",
+            name: locale.commandNewNoteNewWindow,
             callback: async () => {
                 const promptValue = await this.promptNewNote();
                 if(promptValue) {
@@ -229,7 +234,7 @@ export default class RapidNotes extends Plugin {
             if(prefixedFolder.addCommand && prefixedFolder.folder) {
                 plugin.addCommand({
                     id: "new-prefixed-note-" + prefixedFolder.folder,
-                    name: "New note in " + prefixedFolder.folder,
+                    name: commandNameForFolder(prefixedFolder.folder),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.sameTab);
@@ -237,7 +242,7 @@ export default class RapidNotes extends Plugin {
                 });
                 plugin.addCommand({
                     id: "new-prefixed-note-" + prefixedFolder.folder + "-new-tab",
-                    name: "New note in " + prefixedFolder.folder + " (open in new tab)",
+                    name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewTabSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newTab);
@@ -245,7 +250,7 @@ export default class RapidNotes extends Plugin {
                 });
                 plugin.addCommand({
                     id: "new-prefixed-note-" + prefixedFolder.folder + "-new-background-tab",
-                    name: "New note in " + prefixedFolder.folder + " (open in new background tab)",
+                    name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInBackgroundTabSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newTab, false);
@@ -253,7 +258,7 @@ export default class RapidNotes extends Plugin {
                 });
                 plugin.addCommand({
                     id: "new-prefixed-note-" + prefixedFolder.folder + "-new-pane",
-                    name: "New note in " + prefixedFolder.folder + " (open in new pane)",
+                    name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewPaneSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newPane);
@@ -261,7 +266,7 @@ export default class RapidNotes extends Plugin {
                 });
                 plugin.addCommand({
                     id: "new-prefixed-note-" + prefixedFolder.folder + "-new-window",
-                    name: "New note in " + prefixedFolder.folder + " (open in new window)",
+                    name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewWindowSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newWindow);
@@ -272,28 +277,28 @@ export default class RapidNotes extends Plugin {
 
         plugin.addCommand({
             id: "new-prefixed-note-inline-new-tab",
-            name: "New inline note (open in new tab)",
+            name: locale.commandNewInlineNoteNewTab,
             editorCallback: async (editor: Editor) => {
                 this.triggerInlineReplacement(editor, NotePlacement.newTab);
             },
         });
         plugin.addCommand({
             id: "new-prefixed-note-inline-background-tab",
-            name: "New inline note (open in background tab)",
+            name: locale.commandNewInlineNoteBackgroundTab,
             editorCallback: async (editor: Editor) => {
                 this.triggerInlineReplacement(editor, NotePlacement.newTab, false);
             },
         });
         plugin.addCommand({
             id: "new-prefixed-note-inline-new-pane",
-            name: "New inline note (open in new pane)",
+            name: locale.commandNewInlineNoteNewPane,
             editorCallback: async (editor: Editor) => {
                 this.triggerInlineReplacement(editor, NotePlacement.newPane);
             },
         });
         plugin.addCommand({
             id: "new-prefixed-note-inline-new-window",
-            name: "New inline note (open in new window)",
+            name: locale.commandNewInlineNoteNewWindow,
             editorCallback: async (editor: Editor) => {
                 this.triggerInlineReplacement(editor, NotePlacement.newWindow);
             },
@@ -572,6 +577,8 @@ class RapidNotesSettingsTab extends PluginSettingTab {
 
     private createRulesDescription(locale: ReturnType<typeof getLocale>): DocumentFragment {
         const fragment = document.createDocumentFragment();
+        const list = document.createElement("ul");
+        list.className = "rapid-notes-rule-help-list";
         const lines: Array<[string, string]> = [
             [locale.addRulesPrefixLabel, locale.addRulesPrefixDesc],
             [locale.addRulesFilenamePrefixLabel, locale.addRulesFilenamePrefixDesc],
@@ -581,14 +588,16 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         ];
 
         lines.forEach(([label, description]) => {
-            const row = document.createElement("div");
+            const row = document.createElement("li");
             row.className = "rapid-notes-rule-help-row";
             const labelEl = document.createElement("strong");
             labelEl.textContent = `${label}: `;
             row.appendChild(labelEl);
             row.append(description);
-            fragment.appendChild(row);
+            list.appendChild(row);
         });
+
+        fragment.appendChild(list);
 
         const hint = document.createElement("p");
         hint.className = "rapid-notes-rule-help-note";

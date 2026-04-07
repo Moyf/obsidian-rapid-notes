@@ -6,6 +6,7 @@ import {
     TFile,
 } from "obsidian";
 import { RapidNotesSettings } from "../main";
+import { getLocale } from "../i18n";
 import { AliasIndexer } from "./AliasIndexer";
 
 export class PromptModal extends Modal {
@@ -23,6 +24,7 @@ export class PromptModal extends Modal {
     visibleMatchingFiles: TFile[] = [];
     selectedMatchIndex = -1;
     hasNavigatedSuggestions = false;
+    locale = getLocale();
 
     constructor(
         app: App,
@@ -61,11 +63,12 @@ export class PromptModal extends Modal {
             // Suggestions block
             const instructionsHeadingEl = document.createElement('div');
             instructionsHeadingEl.className = 'prompt-instructions prompt-instructions-heading';
-            instructionsHeadingEl.innerText = "Prefixed folders:";
+            instructionsHeadingEl.innerText = this.locale.promptPrefixedFoldersHeading;
 
             const instructionsFooterEl = document.createElement('div');
             instructionsFooterEl.className = 'prompt-instructions';
-            instructionsFooterEl.innerHTML = `Use <code>${this.escapeSymbol}</code> to escape the prefix.`;
+            instructionsFooterEl.innerHTML = this.locale.promptEscapePrefixHelpText
+                .replace("{symbol}", this.escapeSymbol);
 
             const instructionsListEl = document.createElement('div');
             instructionsListEl.className = 'prompt-instructions';
@@ -305,7 +308,9 @@ export class PromptModal extends Modal {
             this.existingNotesHintEl.style.display = 'block';
             
             // Show the search term and match count
-            this.existingNotesHintEl.innerHTML = `<span class="existing-notes-count">${matchingFiles.length}</span> existing note(s) found matching "${searchTerm}"`;
+            const foundMatchingText = this.locale.existingNotesFoundMatchingText
+                .replace("{term}", searchTerm);
+            this.existingNotesHintEl.innerHTML = `<span class="existing-notes-count">${matchingFiles.length}</span> ${foundMatchingText}`;
             
             // Show matching files list (limit based on settings)
             const limit = this.settings.existingNotesLimit || 3;
@@ -373,7 +378,8 @@ export class PromptModal extends Modal {
             if (matchingFiles.length > limit) {
                 const moreEl = document.createElement('div');
                 moreEl.className = 'matching-file-more';
-                moreEl.textContent = `... and ${matchingFiles.length - limit} more`;
+                moreEl.textContent = this.locale.matchingFilesMoreText
+                    .replace("{count}", String(matchingFiles.length - limit));
                 this.matchingFilesEl.appendChild(moreEl);
             }
         } else {
