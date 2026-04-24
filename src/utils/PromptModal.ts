@@ -26,6 +26,7 @@ export class PromptModal extends Modal {
     hasNavigatedSuggestions = false;
     lastHighlightKey = "";
     locale = getLocale();
+    private prefillValue = "";
 
     constructor(
         app: App,
@@ -529,9 +530,17 @@ export class PromptModal extends Modal {
     }
 
     onOpen(): void {
-        this.inputEl.focus();
         this.inputEl.addEventListener('keydown', this.inputListener);
         this.inputEl.addEventListener('input', this.inputChangeListener);
+
+        if (this.prefillValue) {
+            this.inputEl.value = this.prefillValue;
+            this.updateExistingNotesHint(this.prefillValue.trim());
+            this.updateInstructionHighlighting(this.prefillValue);
+        }
+
+        this.inputEl.focus();
+        this.inputEl.setSelectionRange(0, 0);
     }
 
     onClose(): void {
@@ -575,5 +584,9 @@ export class PromptModal extends Modal {
         this.resolve = resolve;
         this.reject = reject;
         this.open();
+    }
+
+    setPrefillValue(value: string): void {
+        this.prefillValue = value;
     }
 }

@@ -66,4 +66,6 @@ export interface RapidNotesLocale {
     noticePrefixAlreadyUsed: string;
     noticePrefixContainsSpace: string;
     noticeFolderAlreadyUsed: string;
+    escGoBackToInputName: string;
+    escGoBackToInputDesc: string;
 }

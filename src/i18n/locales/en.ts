@@ -67,7 +67,9 @@ const en: RapidNotesLocale = {
     inputRuleNamePlaceholder: "Rule name",
     noticePrefixAlreadyUsed: "Prefix already used.",
     noticePrefixContainsSpace: "Prefixes cannot contain spaces.",
-    noticeFolderAlreadyUsed: "This folder already has an associated prefix."
+    noticeFolderAlreadyUsed: "This folder already has an associated prefix.",
+    escGoBackToInputName: "ESC returns to input in folder chooser",
+    escGoBackToInputDesc: "When pressing ESC in the folder selection modal, return to the note name input instead of closing entirely."
 };
 
 export default en;

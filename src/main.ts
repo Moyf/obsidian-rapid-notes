@@ -24,6 +24,18 @@ import Sortable, { SortableOptions } from 'sortablejs';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 const SortableLib = (Sortable as any);
 
+class GoBackToInputError extends Error {
+    constructor(public readonly originalInput: string) {
+        super("go-back-to-input");
+    }
+}
+
+class CancelledByUserError extends Error {
+    constructor() {
+        super("cancelled-by-user");
+    }
+}
+
 export enum NotePlacement {
     sameTab,
     newTab = "tab",
@@ -57,6 +69,7 @@ export interface RapidNotesSettings {
     existingNotesLimit: number;
     useFuzzyMatching: boolean;
     hideUnmatchedRules: boolean;
+    escGoBackToInput: boolean;
 }
 
 const DEFAULT_SETTINGS = {
@@ -69,7 +82,8 @@ const DEFAULT_SETTINGS = {
     showExistingNotesHint: true,
     existingNotesLimit: 3,
     useFuzzyMatching: true,
-    hideUnmatchedRules: false
+    hideUnmatchedRules: false,
+    escGoBackToInput: true
 };
 
 const PLACEHOLDER_RESOLVERS = [
@@ -186,9 +200,9 @@ export default class RapidNotes extends Plugin {
             id: "new-prefixed-note",
             name: locale.commandNewNoteCurrentTab,
             callback: async () => {
-                const promptValue = await this.promptNewNote();
-                if(promptValue) {
-                    const { folderPath, filename } = await this.parseFilename(promptValue);
+                const parsed = await this.promptAndParse();
+                if(parsed) {
+                    const { folderPath, filename } = parsed;
                     this.openNote(folderPath, filename, NotePlacement.sameTab);
                 }
             }
@@ -197,9 +211,9 @@ export default class RapidNotes extends Plugin {
             id: "new-prefixed-note-new-tab",
             name: locale.commandNewNoteNewTab,
             callback: async () => {
-                const promptValue = await this.promptNewNote();
-                if(promptValue) {
-                    const { folderPath, filename } = await this.parseFilename(promptValue);
+                const parsed = await this.promptAndParse();
+                if(parsed) {
+                    const { folderPath, filename } = parsed;
                     this.openNote(folderPath, filename, NotePlacement.newTab);
                 }
             }
@@ -208,9 +222,9 @@ export default class RapidNotes extends Plugin {
             id: "new-prefixed-note-new-background-tab",
             name: locale.commandNewNoteBackgroundTab,
             callback: async () => {
-                const promptValue = await this.promptNewNote();
-                if(promptValue) {
-                    const { folderPath, filename } = await this.parseFilename(promptValue);
+                const parsed = await this.promptAndParse();
+                if(parsed) {
+                    const { folderPath, filename } = parsed;
                     this.openNote(folderPath, filename, NotePlacement.newTab, false);
                 }
             }
@@ -219,9 +233,9 @@ export default class RapidNotes extends Plugin {
             id: "new-prefixed-note-new-pane",
             name: locale.commandNewNoteNewPane,
             callback: async () => {
-                const promptValue = await this.promptNewNote();
-                if(promptValue) {
-                    const { folderPath, filename } = await this.parseFilename(promptValue);
+                const parsed = await this.promptAndParse();
+                if(parsed) {
+                    const { folderPath, filename } = parsed;
                     this.openNote(folderPath, filename, NotePlacement.newPane);
                 }
             }
@@ -230,9 +244,9 @@ export default class RapidNotes extends Plugin {
             id: "new-prefixed-note-new-window",
             name: locale.commandNewNoteNewWindow,
             callback: async () => {
-                const promptValue = await this.promptNewNote();
-                if(promptValue) {
-                    const { folderPath, filename } = await this.parseFilename(promptValue);
+                const parsed = await this.promptAndParse();
+                if(parsed) {
+                    const { folderPath, filename } = parsed;
                     this.openNote(folderPath, filename, NotePlacement.newWindow);
                 }
             }
@@ -250,6 +264,9 @@ export default class RapidNotes extends Plugin {
                     name: commandNameForFolder(prefixedFolder.folder),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
+                        if (!promptValue) {
+                            return;
+                        }
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.sameTab);
                     }
                 });
@@ -258,6 +275,9 @@ export default class RapidNotes extends Plugin {
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewTabSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
+                        if (!promptValue) {
+                            return;
+                        }
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newTab);
                     }
                 });
@@ -266,6 +286,9 @@ export default class RapidNotes extends Plugin {
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInBackgroundTabSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
+                        if (!promptValue) {
+                            return;
+                        }
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newTab, false);
                     }
                 });
@@ -274,6 +297,9 @@ export default class RapidNotes extends Plugin {
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewPaneSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
+                        if (!promptValue) {
+                            return;
+                        }
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newPane);
                     }
                 });
@@ -282,6 +308,9 @@ export default class RapidNotes extends Plugin {
                     name: commandNameForFolder(prefixedFolder.folder, locale.commandOpenInNewWindowSuffix),
                     callback: async () => {
                         const promptValue = await this.promptNewNote(prefixedFolder.folder);
+                        if (!promptValue) {
+                            return;
+                        }
                         this.openNote(prefixedFolder.folder, fullPrefix + promptValue, NotePlacement.newWindow);
                     }
                 });
@@ -318,7 +347,27 @@ export default class RapidNotes extends Plugin {
         });
     }
 
-    async promptNewNote(folder: string = "") {
+    async promptAndParse(folder: string = ""): Promise<{ folderPath: string; filename: string } | null> {
+        let prefillValue = "";
+        while (true) {
+            const promptValue = await this.promptNewNote(folder, prefillValue);
+            if (!promptValue) return null;
+            try {
+                return await this.parseFilename(promptValue, true);
+            } catch (err) {
+                if (err instanceof GoBackToInputError) {
+                    prefillValue = err.originalInput;
+                    continue;
+                }
+                if (err instanceof CancelledByUserError) {
+                    return null;
+                }
+                throw err;
+            }
+        }
+    }
+
+    async promptNewNote(folder: string = "", prefillValue: string = "") {
         let placeholder = "New note";
         let modalSuggestions = Array();
         let showSuggestions = this.settings.showModalSuggestions;
@@ -349,7 +398,10 @@ export default class RapidNotes extends Plugin {
             this.settings,
             this.aliasIndexer
         );
-        const promptValue: string = await new Promise((resolve) => prompt.openAndGetValue((resolve), ()=>{}));
+        if (prefillValue) {
+            prompt.setPrefillValue(prefillValue);
+        }
+        const promptValue: string = await new Promise((resolve) => prompt.openAndGetValue((resolve), () => resolve("")));
         return promptValue.trim();
     }
 
@@ -390,7 +442,7 @@ export default class RapidNotes extends Plugin {
         );
     }
 
-    async parseFilename(filename: string) {
+    async parseFilename(filename: string, allowGoBackToPrompt: boolean = false) {
         var folderPath = "";
         const escapeSymbol = this.settings.escapeSymbol || "/";
         if (filename.charAt(0) === escapeSymbol) {
@@ -410,7 +462,16 @@ export default class RapidNotes extends Plugin {
             folders.unshift(preferredFolder);
             const folderPaths = folders.map((folder) => folder.path);
             const suggester = new SuggesterModal(this.app, folderPaths, folderPaths, "Choose folder");
-            folderPath = await new Promise((resolve) => suggester.openAndGetValue(resolve, ()=>{}));
+            const originalFilename = filename;
+            folderPath = await new Promise<string>((resolve, reject) =>
+                suggester.openAndGetValue(resolve, () => {
+                    if (allowGoBackToPrompt && this.settings.escGoBackToInput) {
+                        reject(new GoBackToInputError(originalFilename));
+                        return;
+                    }
+                    reject(new CancelledByUserError());
+                })
+            );
         }
         return {
             folderPath: folderPath,
@@ -458,7 +519,16 @@ export default class RapidNotes extends Plugin {
         if (editor.somethingSelected()) {
             const selection = editor.getSelection().trim();
             const [selectionFilename, alias] = selection.split("|");
-            const {folderPath, filename} = await this.parseFilename(selectionFilename);
+            let parsed: { folderPath: string; filename: string };
+            try {
+                parsed = await this.parseFilename(selectionFilename);
+            } catch (err) {
+                if (err instanceof CancelledByUserError || err instanceof GoBackToInputError) {
+                    return;
+                }
+                throw err;
+            }
+            const {folderPath, filename} = parsed;
             const file = await this.openNote(folderPath, filename, notePlacement, active);
             if(file instanceof TFile) {
                 const replaceText = this.app.fileManager.generateMarkdownLink(file, "", "", alias || filename);
@@ -471,7 +541,16 @@ export default class RapidNotes extends Plugin {
             const match = this.getLinkAtCurrentPosition(line, range.ch);
 
             if(match) {
-                const {folderPath, filename} = await this.parseFilename(match.filename);
+                let parsed: { folderPath: string; filename: string };
+                try {
+                    parsed = await this.parseFilename(match.filename);
+                } catch (err) {
+                    if (err instanceof CancelledByUserError || err instanceof GoBackToInputError) {
+                        return;
+                    }
+                    throw err;
+                }
+                const {folderPath, filename} = parsed;
                 const file = await this.openNote(folderPath, filename, notePlacement, active);
                 if(file instanceof TFile) {
                     const replaceText = this.app.fileManager.generateMarkdownLink(file, "", "", match.alias || filename);
@@ -669,6 +748,20 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                         .setValue(this.plugin.settings.capitalizeFilename)
                         .onChange((capitalizeFilename) => {
                             this.plugin.settings.capitalizeFilename = capitalizeFilename;
+                            this.plugin.saveSettings();
+                        });
+                });
+        });
+
+        generalGroup.addSetting((setting) => {
+            setting
+                .setName(locale.escGoBackToInputName)
+                .setDesc(locale.escGoBackToInputDesc)
+                .addToggle((toggle) => {
+                    toggle
+                        .setValue(this.plugin.settings.escGoBackToInput)
+                        .onChange((escGoBackToInput) => {
+                            this.plugin.settings.escGoBackToInput = escGoBackToInput;
                             this.plugin.saveSettings();
                         });
                 });

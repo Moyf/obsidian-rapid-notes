@@ -67,7 +67,9 @@ const zhCn: RapidNotesLocale = {
     inputRuleNamePlaceholder: "规则名称",
     noticePrefixAlreadyUsed: "该前缀已被使用。",
     noticePrefixContainsSpace: "前缀不能包含空格。",
-    noticeFolderAlreadyUsed: "该文件夹已绑定其他前缀规则。"
+    noticeFolderAlreadyUsed: "该文件夹已绑定其他前缀规则。",
+    escGoBackToInputName: "文件夹选择中按 ESC 返回输入框",
+    escGoBackToInputDesc: "在文件夹选择弹窗中按 ESC 时，返回笔记名输入框而非直接关闭。"
 };
 
 export default zhCn;
