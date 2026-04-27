@@ -3,13 +3,19 @@ import { TextInputSuggest } from "./suggest";
 import type RapidNotes from "../main";
 
 export class IgnoredFolderSuggest extends TextInputSuggest<TFolder> {
+    private onChanged: (() => void) | null = null;
+
     constructor(
         app: App,
         inputEl: HTMLInputElement,
-        private plugin: RapidNotes,
-        private settingTab: { display(): void }
+        private plugin: RapidNotes
     ) {
         super(app, inputEl);
+    }
+
+    setOnChanged(cb: () => void): this {
+        this.onChanged = cb;
+        return this;
     }
 
     getSuggestions(inputStr: string): TFolder[] {
@@ -23,7 +29,6 @@ export class IgnoredFolderSuggest extends TextInputSuggest<TFolder> {
             if (!(file instanceof TFolder)) return;
             if (file.path === "") return;
 
-            // Exclude already ignored folders or children of ignored folders
             const isIgnored = ignoredFolders.some(
                 (ignored) =>
                     file.path === ignored ||
@@ -50,7 +55,9 @@ export class IgnoredFolderSuggest extends TextInputSuggest<TFolder> {
         }
         this.inputEl.value = "";
         this.inputEl.trigger("input");
-        this.settingTab.display();
+        if (this.onChanged) {
+            this.onChanged();
+        }
         this.close();
     }
 }

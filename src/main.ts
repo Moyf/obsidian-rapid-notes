@@ -752,7 +752,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                     (p) => p !== folderPath
                 );
                 this.plugin.saveSettings();
-                this.display();
+                this.renderIgnoredFoldersList(containerEl);
             });
         });
     }
@@ -911,7 +911,8 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 .setName(locale.addIgnoredFolderName)
                 .addText((text) => {
                     text.setPlaceholder(locale.addIgnoredFolderPlaceholder);
-                    new IgnoredFolderSuggest(this.app, text.inputEl, this.plugin, this);
+                    const suggest = new IgnoredFolderSuggest(this.app, text.inputEl, this.plugin);
+                    suggest.setOnChanged(() => this.renderIgnoredFoldersList(ignoredFoldersList));
                 });
         });
 
