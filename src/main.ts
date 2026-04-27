@@ -13,6 +13,7 @@ import {
 } from 'obsidian';
 import * as ObsidianApi from 'obsidian';
 import { FolderSuggest } from './utils/FolderSuggester';
+import { IgnoredFolderSuggest } from './utils/IgnoredFolderSuggest';
 import { PromptModal } from './utils/PromptModal';
 import { SuggesterModal } from './utils/SuggesterModal';
 import { arraymove } from './utils/Utils';
@@ -70,6 +71,7 @@ export interface RapidNotesSettings {
     useFuzzyMatching: boolean;
     hideUnmatchedRules: boolean;
     escGoBackToInput: boolean;
+    ignoredFolders: string[];
 }
 
 const DEFAULT_SETTINGS = {
@@ -83,7 +85,8 @@ const DEFAULT_SETTINGS = {
     existingNotesLimit: 3,
     useFuzzyMatching: true,
     hideUnmatchedRules: false,
-    escGoBackToInput: true
+    escGoBackToInput: true,
+    ignoredFolders: []
 };
 
 const PLACEHOLDER_RESOLVERS = [
@@ -458,8 +461,30 @@ export default class RapidNotes extends Plugin {
             const activeFile:TFile|null = this.app.workspace.getActiveFile();
             const preferredFolder:TFolder = this.app.fileManager.getNewFileParent(activeFile?.path || "");
 
+            // Filter out ignored folders and their children
+            const ignoredFolders = this.settings.ignoredFolders;
+            if (ignoredFolders.length > 0) {
+                folders = folders.filter((folder) => {
+                    return !ignoredFolders.some((ignored) =>
+                        folder.path === ignored || folder.path.startsWith(ignored + "/")
+                    );
+                });
+            }
+
+            // Ensure list is not empty — fall back to root if everything was filtered out
+            if (folders.length === 0) {
+                folders = [this.app.vault.getRoot()];
+            }
+
+            // Only unshift preferredFolder if it's not in the ignored list
+            const preferredIsIgnored = ignoredFolders.some((ignored) =>
+                preferredFolder.path === ignored || preferredFolder.path.startsWith(ignored + "/")
+            );
             folders = folders.filter((folder) => folder.path !== preferredFolder.path);
-            folders.unshift(preferredFolder);
+            if (!preferredIsIgnored) {
+                folders.unshift(preferredFolder);
+            }
+
             const folderPaths = folders.map((folder) => folder.path);
             const suggester = new SuggesterModal(this.app, folderPaths, folderPaths, "Choose folder");
             const originalFilename = filename;
@@ -702,6 +727,36 @@ class RapidNotesSettingsTab extends PluginSettingTab {
         this.plugin.cleanEmptyEntries();
     }
 
+    private renderIgnoredFoldersList(containerEl: HTMLElement): void {
+        containerEl.empty();
+        const locale = getLocale();
+
+        if (this.plugin.settings.ignoredFolders.length === 0) {
+            containerEl.createEl("p", { text: locale.noIgnoredFolders, cls: "rapid-notes-ignored-folders-empty" });
+            return;
+        }
+
+        this.plugin.settings.ignoredFolders.forEach((folderPath) => {
+            const item = containerEl.createDiv({ cls: "rapid-notes-ignored-folder-item" });
+
+            item.createSpan({ text: folderPath, cls: "rapid-notes-ignored-folder-path" });
+
+            const removeBtn = item.createDiv({
+                cls: "rapid-notes-ignored-folder-remove clickable-icon",
+                attr: { "aria-label": locale.removeIgnoredFolder }
+            });
+            removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+
+            removeBtn.addEventListener("click", () => {
+                this.plugin.settings.ignoredFolders = this.plugin.settings.ignoredFolders.filter(
+                    (p) => p !== folderPath
+                );
+                this.plugin.saveSettings();
+                this.display();
+            });
+        });
+    }
+
     display(): void {
         const locale = getLocale();
         (this as unknown as { icon?: string }).icon = locale.settingsIcon;
@@ -844,6 +899,24 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                     });
             });
         }
+
+        const ignoredFoldersGroup = this.createSettingGroup(locale.groupIgnoredFoldersTitle);
+        ignoredFoldersGroup.addSetting((setting) => {
+            setting
+                .setDesc(locale.groupIgnoredFoldersDesc);
+        });
+
+        ignoredFoldersGroup.addSetting((setting) => {
+            setting
+                .setName(locale.addIgnoredFolderName)
+                .addText((text) => {
+                    text.setPlaceholder(locale.addIgnoredFolderPlaceholder);
+                    new IgnoredFolderSuggest(this.app, text.inputEl, this.plugin, this);
+                });
+        });
+
+        const ignoredFoldersList = ignoredFoldersGroup.addCustomContainer("rapid-notes-ignored-folders-list");
+        this.renderIgnoredFoldersList(ignoredFoldersList);
 
         const rulesGroup = this.createSettingGroup(locale.groupRulesTitle);
         rulesGroup.addSetting((setting) => {

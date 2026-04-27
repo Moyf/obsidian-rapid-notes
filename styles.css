@@ -104,7 +104,7 @@
 .rapid-notes-modal .matching-file-item .file-name {
     display: block;
     flex: 1 1 auto;
-    font-size: 1em;
+    font-size: var(--font-ui-medium);
     font-weight: 500;
     color: var(--text-normal);
     margin-bottom: 2px;
@@ -128,6 +128,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    font-size: 0.8em;
 }
 
 .rapid-notes-modal .matching-file-item .file-path-icon {
@@ -484,4 +485,61 @@
 
 .modal-button-container .mod-cta:hover {
     background-color: var(--interactive-accent-hover);
+}
+
+/* Ignored Folders Settings */
+.rapid-notes-ignored-folders-list {
+    padding: 4px 0;
+}
+
+.rapid-notes-ignored-folders-empty {
+    color: var(--text-muted);
+    font-size: var(--font-ui-small);
+    margin: 4px 0;
+    padding: 4px 0;
+}
+
+.rapid-notes-ignored-folder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    border-radius: 4px;
+    gap: 8px;
+}
+
+.rapid-notes-ignored-folder-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.rapid-notes-ignored-folder-path {
+    flex: 1 1 auto;
+    font-size: var(--font-ui-small);
+    color: var(--text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rapid-notes-ignored-folder-remove {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 3px;
+    opacity: 0.5;
+    transition: color 0.15s, opacity 0.15s, background-color 0.15s;
+}
+
+.rapid-notes-ignored-folder-item:hover .rapid-notes-ignored-folder-remove {
+    opacity: 1;
+}
+
+.rapid-notes-ignored-folder-remove:hover {
+    color: var(--text-error);
+    background-color: var(--background-modifier-error-hover, var(--background-modifier-hover));
 }
