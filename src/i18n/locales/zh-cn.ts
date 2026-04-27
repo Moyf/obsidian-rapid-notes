@@ -69,7 +69,13 @@ const zhCn: RapidNotesLocale = {
     noticePrefixContainsSpace: "前缀不能包含空格。",
     noticeFolderAlreadyUsed: "该文件夹已绑定其他前缀规则。",
     escGoBackToInputName: "文件夹选择中按 ESC 返回输入框",
-    escGoBackToInputDesc: "在文件夹选择弹窗中按 ESC 时，返回笔记名输入框而非直接关闭。"
+    escGoBackToInputDesc: "在文件夹选择弹窗中按 ESC 时，返回笔记名输入框而非直接关闭。",
+    groupIgnoredFoldersTitle: "忽略文件夹",
+    groupIgnoredFoldersDesc: "这些文件夹（及其子文件夹）将从「未匹配前缀时弹出的文件夹选择列表」中隐藏。",
+    addIgnoredFolderName: "添加要忽略的文件夹",
+    addIgnoredFolderPlaceholder: "输入以搜索文件夹...",
+    noIgnoredFolders: "暂无忽略的文件夹。",
+    removeIgnoredFolder: "移除"
 };
 
 export default zhCn;

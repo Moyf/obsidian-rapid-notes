@@ -69,7 +69,13 @@ const en: RapidNotesLocale = {
     noticePrefixContainsSpace: "Prefixes cannot contain spaces.",
     noticeFolderAlreadyUsed: "This folder already has an associated prefix.",
     escGoBackToInputName: "ESC returns to input in folder chooser",
-    escGoBackToInputDesc: "When pressing ESC in the folder selection modal, return to the note name input instead of closing entirely."
+    escGoBackToInputDesc: "When pressing ESC in the folder selection modal, return to the note name input instead of closing entirely.",
+    groupIgnoredFoldersTitle: "Ignored folders",
+    groupIgnoredFoldersDesc: "These folders (and their subfolders) are hidden from the folder chooser that appears when no prefix matches.",
+    addIgnoredFolderName: "Add folder to ignore list",
+    addIgnoredFolderPlaceholder: "Type to search folders...",
+    noIgnoredFolders: "No folders ignored.",
+    removeIgnoredFolder: "Remove"
 };
 
 export default en;

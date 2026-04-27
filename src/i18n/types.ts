@@ -68,4 +68,10 @@ export interface RapidNotesLocale {
     noticeFolderAlreadyUsed: string;
     escGoBackToInputName: string;
     escGoBackToInputDesc: string;
+    groupIgnoredFoldersTitle: string;
+    groupIgnoredFoldersDesc: string;
+    addIgnoredFolderName: string;
+    addIgnoredFolderPlaceholder: string;
+    noIgnoredFolders: string;
+    removeIgnoredFolder: string;
 }
