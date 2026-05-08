@@ -241,7 +241,7 @@
 
 /* Shared field base */
 .rapid-notes-field {
-    height: 28px;
+    height: auto;
     min-width: 0;
     box-sizing: border-box;
 }
@@ -262,7 +262,7 @@
 }
 
 .rapid-notes-field--folder input[type="search"] {
-    height: 28px;
+    height: var(--input-height);
     padding: 0 6px 0 28px; /* left padding for search icon */
     width: 100%;
     box-sizing: border-box;
@@ -287,6 +287,17 @@
     pointer-events: none;
 }
 
+.rapid-notes-rule-name-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.rapid-notes-field--folder .search-input-container::before {
+    width: 16px;
+    height: 16px;
+    background-size: 16px;
+}
+
 .rapid-notes-rule-name-input {
     width: 100%;
     height: 28px;
@@ -294,7 +305,7 @@
 }
 
 .rapid-notes-rule-name-wrap input[type="text"] {
-    padding-left: 24px !important;
+    padding-left: 30px !important;
 }
 
 .rapid-notes-field--toggle {
@@ -323,21 +334,36 @@
 
 .rapid-notes-delete-btn:hover {
     color: var(--text-error);
-    background-color: var(--background-modifier-error-hover, var(--background-modifier-hover));
+    background-color: var(--background-modifier-hover);
 }
 
 @media screen and (max-width: 780px) {
     .rapid-notes-rule-entry {
         grid-template-columns: 22px minmax(0, 1fr) 24px;
-        column-gap: 6px;
+        column-gap: 4px;
+        padding: 6px 0;
     }
 
     .rapid-notes-rule-row--top {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 5em 1fr;
     }
 
     .rapid-notes-field--rule-name {
         grid-column: 1 / -1;
+    }
+
+    .rapid-notes-rule-name-wrap {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .rapid-notes-rule-name-input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .rapid-notes-field--toggle {
+        width: 44px;
     }
 
     .rapid-notes-rule-row--bottom {
@@ -544,5 +570,5 @@
 
 .rapid-notes-ignored-folder-remove:hover {
     color: var(--text-error);
-    background-color: var(--background-modifier-error-hover, var(--background-modifier-hover));
+    background-color: var(--background-modifier-hover);
 }

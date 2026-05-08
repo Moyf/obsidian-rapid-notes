@@ -9,7 +9,8 @@ import {
     Vault,
     normalizePath,
     Editor,
-    EditorPosition
+    EditorPosition,
+    setIcon
 } from 'obsidian';
 import * as ObsidianApi from 'obsidian';
 import { FolderSuggest } from './utils/FolderSuggester';
@@ -745,7 +746,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 cls: "rapid-notes-ignored-folder-remove clickable-icon",
                 attr: { "aria-label": locale.removeIgnoredFolder }
             });
-            removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+            setIcon(removeBtn, 'x');
 
             removeBtn.addEventListener("click", () => {
                 this.plugin.settings.ignoredFolders = this.plugin.settings.ignoredFolders.filter(
@@ -968,7 +969,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 cls: "rapid-notes-drag-handle",
                 attr: { "aria-label": locale.dragHandleAriaLabel, "data-tooltip-position": "top" }
             });
-            dragHandle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>`;
+            setIcon(dragHandle, 'grip-vertical');
 
             const contentEl = entryEl.createDiv({ cls: "rapid-notes-rule-content" });
             const topRowEl = contentEl.createDiv({ cls: "rapid-notes-rule-row rapid-notes-rule-row--top" });
@@ -1010,7 +1011,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 cls: "rapid-notes-rule-name-icon",
                 attr: { "aria-hidden": "true" }
             });
-            ruleNameIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3H4v7l9.59 9.59a2 2 0 0 0 2.82 0l4.18-4.18a2 2 0 0 0 0-2.82Z"/><path d="M7 7h.01"/></svg>`;
+            setIcon(ruleNameIcon, 'tag');
 
             const ruleNameInput = ruleNameWrapper.createEl("input", {
                 cls: "rapid-notes-rule-name-input",
@@ -1058,7 +1059,7 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                 cls: "rapid-notes-field rapid-notes-delete-btn clickable-icon",
                 attr: { "aria-label": locale.deleteButtonAriaLabel }
             });
-            deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`;
+            setIcon(deleteBtn, 'x');
             deleteBtn.addEventListener("click", () => {
                 this.plugin.settings.prefixedFolders.splice(index, 1);
                 this.plugin.saveSettings();
