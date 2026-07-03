@@ -16,7 +16,7 @@ import * as ObsidianApi from 'obsidian';
 import { FolderSuggest } from './utils/FolderSuggester';
 import { IgnoredFolderSuggest } from './utils/IgnoredFolderSuggest';
 import { PromptModal } from './utils/PromptModal';
-import { SuggesterModal } from './utils/SuggesterModal';
+import { SuggesterModal, FolderOrNoteChooserModal, type FolderOrNoteChoice, type FolderOrNoteChooserTexts } from './utils/SuggesterModal';
 import { arraymove } from './utils/Utils';
 import { KeywordsModal } from './utils/KeywordsModal';
 import { AliasIndexer } from './utils/AliasIndexer';
@@ -37,6 +37,28 @@ class CancelledByUserError extends Error {
         super("cancelled-by-user");
     }
 }
+
+// ── FolderNotes plugin API (PR #334) ──────────────────────────────────────
+// We declare only the subset we use so that we don't depend on the plugin's
+// own type package.
+interface FolderNotesApi {
+    version: string;
+    convertNoteToFolderNote(notePath: string, options?: { skipConfirmation?: boolean }): Promise<void>;
+}
+
+/**
+ * Returns the FolderNotes API if the plugin is installed, enabled, and
+ * exposes the expected `api` object.  Returns `null` otherwise.
+ */
+function getFolderNotesApi(app: App): FolderNotesApi | null {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const plugin = (app as any).plugins?.plugins?.['folder-notes'];
+    if (!plugin) return null;
+    const api = plugin.api as FolderNotesApi | undefined;
+    if (!api || typeof api.convertNoteToFolderNote !== 'function') return null;
+    return api;
+}
+// ─────────────────────────────────────────────────────────────────────────
 
 export enum NotePlacement {
     sameTab,
@@ -73,6 +95,7 @@ export interface RapidNotesSettings {
     hideUnmatchedRules: boolean;
     escGoBackToInput: boolean;
     ignoredFolders: string[];
+    folderNoteConversion: boolean;
 }
 
 const DEFAULT_SETTINGS = {
@@ -87,7 +110,8 @@ const DEFAULT_SETTINGS = {
     useFuzzyMatching: true,
     hideUnmatchedRules: false,
     escGoBackToInput: true,
-    ignoredFolders: []
+    ignoredFolders: [],
+    folderNoteConversion: true,
 };
 
 const PLACEHOLDER_RESOLVERS = [
@@ -487,10 +511,31 @@ export default class RapidNotes extends Plugin {
             }
 
             const folderPaths = folders.map((folder) => folder.path);
-            const suggester = new SuggesterModal(this.app, folderPaths, folderPaths, "Choose folder");
+            const locale = getLocale();
             const originalFilename = filename;
-            folderPath = await new Promise<string>((resolve, reject) =>
-                suggester.openAndGetValue(resolve, () => {
+
+            // Determine whether the FolderNote Tab-switch feature is available
+            const fnApi = this.settings.folderNoteConversion ? getFolderNotesApi(this.app) : null;
+            const notePicker = fnApi
+                ? this.app.vault.getFiles().filter((f) => f.extension === "md")
+                : undefined;
+
+            const chooserTexts: FolderOrNoteChooserTexts = {
+                folderPlaceholder: fnApi
+                    ? locale.chooserFolderPlaceholderWithFN
+                    : locale.chooserFolderPlaceholder,
+                notePlaceholder: locale.chooserNotePlaceholder,
+            };
+
+            const chooser = new FolderOrNoteChooserModal(
+                this.app,
+                folderPaths,
+                chooserTexts,
+                notePicker,
+            );
+
+            const choice = await new Promise<FolderOrNoteChoice>((resolve, reject) =>
+                chooser.openAndGetValue(resolve, () => {
                     if (allowGoBackToPrompt && this.settings.escGoBackToInput) {
                         reject(new GoBackToInputError(originalFilename));
                         return;
@@ -498,6 +543,29 @@ export default class RapidNotes extends Plugin {
                     reject(new CancelledByUserError());
                 })
             );
+
+            if (choice.mode === "folder") {
+                folderPath = choice.folderPath;
+            } else {
+                // Note mode: convert the chosen note to a FolderNote, then
+                // place the new note inside the resulting folder.
+                const chosenFile = choice.file;
+                const parentFolder = chosenFile.parent;
+                if (!parentFolder || parentFolder.path === "" || parentFolder.path === "/") {
+                    new Notice("Selected note must be inside a folder.");
+                    throw new CancelledByUserError();
+                }
+                // The folder that FN will create is named after the note (without extension)
+                const newFolderPath = normalizePath(parentFolder.path + "/" + chosenFile.basename);
+                // Await the async conversion — FN creates the folder and moves the note inside it
+                try {
+                    await fnApi!.convertNoteToFolderNote(chosenFile.path, { skipConfirmation: true });
+                } catch (err) {
+                    new Notice(`FolderNotes: ${err instanceof Error ? err.message : String(err)}`);
+                    throw new CancelledByUserError();
+                }
+                folderPath = newFolderPath;
+            }
         }
         return {
             folderPath: folderPath,
@@ -818,6 +886,20 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                         .setValue(this.plugin.settings.escGoBackToInput)
                         .onChange((escGoBackToInput) => {
                             this.plugin.settings.escGoBackToInput = escGoBackToInput;
+                            this.plugin.saveSettings();
+                        });
+                });
+        });
+
+        generalGroup.addSetting((setting) => {
+            setting
+                .setName(locale.folderNoteConversionName)
+                .setDesc(locale.folderNoteConversionDesc)
+                .addToggle((toggle) => {
+                    toggle
+                        .setValue(this.plugin.settings.folderNoteConversion)
+                        .onChange((folderNoteConversion) => {
+                            this.plugin.settings.folderNoteConversion = folderNoteConversion;
                             this.plugin.saveSettings();
                         });
                 });
