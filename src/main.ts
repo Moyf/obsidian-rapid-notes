@@ -555,16 +555,32 @@ export default class RapidNotes extends Plugin {
                     new Notice("Selected note must be inside a folder.");
                     throw new CancelledByUserError();
                 }
-                // The folder that FN will create is named after the note (without extension)
+                // The folder FN will create is a sibling folder named after the note's basename.
                 const newFolderPath = normalizePath(parentFolder.path + "/" + chosenFile.basename);
-                // Await the async conversion — FN creates the folder and moves the note inside it
+
                 try {
                     await fnApi!.convertNoteToFolderNote(chosenFile.path, { skipConfirmation: true });
+                    folderPath = newFolderPath;
                 } catch (err) {
-                    new Notice(`FolderNotes: ${err instanceof Error ? err.message : String(err)}`);
-                    throw new CancelledByUserError();
+                    const errName = err instanceof Error ? (err as any).name : "";
+                    if (errName === "FolderNotesApiAlreadyFolderNoteError") {
+                        // Note is already a folder note (e.g. Projects/Work/Work.md).
+                        // Its folder is parentFolder — use that directly.
+                        new Notice(`ℹ️ "${chosenFile.basename}" is already a FolderNote. Placing note inside its folder.`);
+                        folderPath = parentFolder.path;
+                    } else if (
+                        errName === "FolderNotesApiPathError" &&
+                        err instanceof Error &&
+                        err.message.includes("already exists")
+                    ) {
+                        // A folder with that name already exists — reuse it.
+                        new Notice(`ℹ️ Folder "${chosenFile.basename}" already exists. Placing note inside it.`);
+                        folderPath = newFolderPath;
+                    } else {
+                        new Notice(`FolderNotes: ${err instanceof Error ? err.message : String(err)}`);
+                        throw new CancelledByUserError();
+                    }
                 }
-                folderPath = newFolderPath;
             }
         }
         return {
