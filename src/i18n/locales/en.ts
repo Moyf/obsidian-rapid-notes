@@ -81,6 +81,10 @@ inputRuleNamePlaceholder: "Label",
     chooserNotePlaceholder: "Choose note to convert to FolderNote",
     folderNoteConversionName: "Create FolderNote and place new note inside",
     folderNoteConversionDesc: "When choosing a destination, press Tab to switch to note-picker mode. The chosen note will be converted into a FolderNote (requires FolderNotes plugin), and the new note is placed inside the resulting folder.",
+    noticeNoteNotInFolder: "Selected note must be inside a folder.",
+    noticeAlreadyFolderNote: "\"{name}\" is already a FolderNote. Placing note inside its folder.",
+    noticeFolderAlreadyExists: "Folder \"{name}\" already exists. Placing note inside it.",
+    noticeFolderNoteError: "FolderNotes: {message}",
 };
 
 export default en;

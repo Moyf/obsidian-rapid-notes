@@ -79,4 +79,8 @@ export interface RapidNotesLocale {
     chooserNotePlaceholder: string;
     folderNoteConversionName: string;
     folderNoteConversionDesc: string;
+    noticeNoteNotInFolder: string;
+    noticeAlreadyFolderNote: string;
+    noticeFolderAlreadyExists: string;
+    noticeFolderNoteError: string;
 }
