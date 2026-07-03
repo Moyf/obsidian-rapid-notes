@@ -112,6 +112,16 @@ export class FolderOrNoteChooserModal extends FuzzySuggestModal<string | TFile> 
         this.folderItems = folders;
         this.noteItems = notePicker ?? [];
         this.setPlaceholder(texts.folderPlaceholder);
+
+        // Register Tab via the Obsidian scope system so it's actually intercepted.
+        // (SuggestModal has no onKeydown hook — all key handling goes through this.scope.)
+        if (notePicker !== undefined) {
+            this.scope.register([], "Tab", (evt) => {
+                evt.preventDefault();
+                this.toggleMode();
+                return false;
+            });
+        }
     }
 
     /** Switch between folder and note mode. */
@@ -160,18 +170,6 @@ export class FolderOrNoteChooserModal extends FuzzySuggestModal<string | TFile> 
     onClose(): void {
         if (!this.submitted) {
             this.reject();
-        }
-    }
-
-    /**
-     * Intercept Tab to switch modes (only when `notePicker` was provided).
-     * All other keys fall through to the default FuzzySuggestModal handler
-     * via the Obsidian scope system (registered in the parent constructor).
-     */
-    onKeydown(evt: KeyboardEvent): void {
-        if (evt.key === "Tab" && this.notePicker !== undefined) {
-            evt.preventDefault();
-            this.toggleMode();
         }
     }
 
