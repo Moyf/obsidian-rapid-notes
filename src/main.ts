@@ -551,8 +551,9 @@ export default class RapidNotes extends Plugin {
                 // place the new note inside the resulting folder.
                 const chosenFile = choice.file;
                 const parentFolder = chosenFile.parent;
+                const locale = getLocale();
                 if (!parentFolder || parentFolder.path === "" || parentFolder.path === "/") {
-                    new Notice("Selected note must be inside a folder.");
+                    new Notice(locale.noticeNoteNotInFolder);
                     throw new CancelledByUserError();
                 }
                 // The folder FN will create is a sibling folder named after the note's basename.
@@ -566,7 +567,7 @@ export default class RapidNotes extends Plugin {
                     if (errName === "FolderNotesApiAlreadyFolderNoteError") {
                         // Note is already a folder note (e.g. Projects/Work/Work.md).
                         // Its folder is parentFolder — use that directly.
-                        new Notice(`ℹ️ "${chosenFile.basename}" is already a FolderNote. Placing note inside its folder.`);
+                        new Notice(`ℹ️ ${locale.noticeAlreadyFolderNote.replace("{name}", chosenFile.basename)}`);
                         folderPath = parentFolder.path;
                     } else if (
                         errName === "FolderNotesApiPathError" &&
@@ -574,10 +575,10 @@ export default class RapidNotes extends Plugin {
                         err.message.includes("already exists")
                     ) {
                         // A folder with that name already exists — reuse it.
-                        new Notice(`ℹ️ Folder "${chosenFile.basename}" already exists. Placing note inside it.`);
+                        new Notice(`ℹ️ ${locale.noticeFolderAlreadyExists.replace("{name}", chosenFile.basename)}`);
                         folderPath = newFolderPath;
                     } else {
-                        new Notice(`FolderNotes: ${err instanceof Error ? err.message : String(err)}`);
+                        new Notice(locale.noticeFolderNoteError.replace("{message}", err instanceof Error ? err.message : String(err)));
                         throw new CancelledByUserError();
                     }
                 }
