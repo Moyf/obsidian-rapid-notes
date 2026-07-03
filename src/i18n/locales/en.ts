@@ -75,7 +75,12 @@ inputRuleNamePlaceholder: "Label",
     addIgnoredFolderName: "Add folder to ignore list",
     addIgnoredFolderPlaceholder: "Type to search folders...",
     noIgnoredFolders: "No folders ignored.",
-    removeIgnoredFolder: "Remove"
+    removeIgnoredFolder: "Remove",
+    chooserFolderPlaceholder: "Choose folder",
+    chooserFolderPlaceholderWithFN: "Choose folder (Press Tab to choose note)",
+    chooserNotePlaceholder: "Choose note to convert to FolderNote",
+    folderNoteConversionName: "Create FolderNote and place new note inside",
+    folderNoteConversionDesc: "When choosing a destination, press Tab to switch to note-picker mode. The chosen note will be converted into a FolderNote (requires FolderNotes plugin), and the new note is placed inside the resulting folder.",
 };
 
 export default en;

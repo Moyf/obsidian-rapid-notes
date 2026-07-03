@@ -74,4 +74,9 @@ export interface RapidNotesLocale {
     addIgnoredFolderPlaceholder: string;
     noIgnoredFolders: string;
     removeIgnoredFolder: string;
+    chooserFolderPlaceholder: string;
+    chooserFolderPlaceholderWithFN: string;
+    chooserNotePlaceholder: string;
+    folderNoteConversionName: string;
+    folderNoteConversionDesc: string;
 }

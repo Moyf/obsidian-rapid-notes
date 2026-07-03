@@ -75,7 +75,12 @@ inputRuleNamePlaceholder: "标注",
     addIgnoredFolderName: "添加要忽略的文件夹",
     addIgnoredFolderPlaceholder: "输入以搜索文件夹...",
     noIgnoredFolders: "暂无忽略的文件夹。",
-    removeIgnoredFolder: "移除"
+    removeIgnoredFolder: "移除",
+    chooserFolderPlaceholder: "选择文件夹",
+    chooserFolderPlaceholderWithFN: "选择文件夹（按 Tab 切换为选择笔记）",
+    chooserNotePlaceholder: "选择笔记以转换为文件夹笔记",
+    folderNoteConversionName: "创建文件夹笔记并将新笔记放入其中",
+    folderNoteConversionDesc: "在选择目标时，按 Tab 切换到笔记选择模式。所选笔记将被转换为文件夹笔记（需安装 FolderNotes 插件），新笔记将被放入生成的文件夹内。",
 };
 
 export default zhCn;
