@@ -130,8 +130,6 @@ export class FolderOrNoteChooserModal extends FuzzySuggestModal<string | TFile> 
         this.setPlaceholder(
             this.noteMode ? this.texts.notePlaceholder : this.texts.folderPlaceholder,
         );
-        // Wipe the search input so the new list is shown in full.
-        this.inputEl.value = "";
         // Trigger a re-render of suggestions.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (this as any).updateSuggestions();
