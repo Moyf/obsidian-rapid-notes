@@ -96,6 +96,7 @@ export interface RapidNotesSettings {
     escGoBackToInput: boolean;
     ignoredFolders: string[];
     folderNoteConversion: boolean;
+    hideExistingFolderNotes: boolean;
 }
 
 const DEFAULT_SETTINGS = {
@@ -112,6 +113,7 @@ const DEFAULT_SETTINGS = {
     escGoBackToInput: true,
     ignoredFolders: [],
     folderNoteConversion: true,
+    hideExistingFolderNotes: true,
 };
 
 const PLACEHOLDER_RESOLVERS = [
@@ -517,7 +519,11 @@ export default class RapidNotes extends Plugin {
             // Determine whether the FolderNote Tab-switch feature is available
             const fnApi = this.settings.folderNoteConversion ? getFolderNotesApi(this.app) : null;
             const notePicker = fnApi
-                ? this.app.vault.getFiles().filter((f) => f.extension === "md")
+                ? this.app.vault.getFiles().filter((file) => {
+                    if (file.extension !== "md") return false;
+                    if (!this.settings.hideExistingFolderNotes) return true;
+                    return file.parent?.name !== file.basename;
+                })
                 : undefined;
 
             const chooserTexts: FolderOrNoteChooserTexts = {
@@ -921,6 +927,22 @@ class RapidNotesSettingsTab extends PluginSettingTab {
                         });
                 });
         });
+
+        if (this.plugin.settings.folderNoteConversion) {
+            generalGroup.addSetting((setting) => {
+                setting
+                    .setName(locale.hideExistingFolderNotesName)
+                    .setDesc(locale.hideExistingFolderNotesDesc)
+                    .addToggle((toggle) => {
+                        toggle
+                            .setValue(this.plugin.settings.hideExistingFolderNotes)
+                            .onChange((hideExistingFolderNotes) => {
+                                this.plugin.settings.hideExistingFolderNotes = hideExistingFolderNotes;
+                                this.plugin.saveSettings();
+                            });
+                    });
+            });
+        }
 
         const suggestionsGroup = this.createSettingGroup(locale.groupSuggestionsTitle);
         suggestionsGroup.addSetting((setting) => {
